@@ -1,0 +1,1 @@
+ALTER TABLE usuarios MODIFY COLUMN password_hash VARCHAR(255) NULL;

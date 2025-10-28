@@ -1,0 +1,28 @@
+/* src/index.css */
+@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+:root {
+  --radius: 12px;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  font-family: "Inter", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  @apply bg-neutral-950 text-neutral-100;
+}
+
+/* Paleta “pro” en modo oscuro por defecto, fácil de ajustar */
+@theme {
+  --color-brand: #7c3aed;        /* violeta elegante */
+  --color-brand-600: #6d28d9;
+  --color-brand-700: #5b21b6;
+  --color-surface: #0b0b0e;      /* cards */
+  --color-border: rgb(255 255 255 / .08);
+}
