@@ -1,2 +1,11 @@
+# Dotenv
 .env
+*.env.local
 
+# Firebase Admin credentials (manténlos fuera del repo)
+secrets/
+*.json
+
+# Node
+node_modules/
+dist/
