@@ -1,7 +1,7 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import App from "./App";
 import Dashboard from "./views/Dashboard";
-import Auth from "./views/Auth";
+import Login from "./pages/Login";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
 export const router = createBrowserRouter([
@@ -13,7 +13,7 @@ export const router = createBrowserRouter([
       { index: true, element: <Navigate to="/dashboard" replace /> },
 
       // Página de autenticación (login OTP / social)
-      { path: "auth", element: <Auth /> },
+      { path: "auth", element: <Login /> },
 
       // Rutas privadas
       {

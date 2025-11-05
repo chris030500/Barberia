@@ -1,9 +1,6 @@
-/* src/index.css */
-@import "tailwindcss";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
 
 :root {
   --radius: 12px;
@@ -18,11 +15,4 @@ body {
   @apply bg-neutral-950 text-neutral-100;
 }
 
-/* Paleta “pro” en modo oscuro por defecto, fácil de ajustar */
-@theme {
-  --color-brand: #7c3aed;        /* violeta elegante */
-  --color-brand-600: #6d28d9;
-  --color-brand-700: #5b21b6;
-  --color-surface: #0b0b0e;      /* cards */
-  --color-border: rgb(255 255 255 / .08);
-}
+/* (Opcional) tu paleta/tema, si la quieres mantener, puede quedarse como CSS normal */

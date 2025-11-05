@@ -7,6 +7,7 @@ import com.barber.backend.login.service.JwtService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,14 +15,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Controlador responsable del inicio de sesión mediante Google OAuth.
- * 
- * Flujo:
- * 1️⃣ Recibe un idToken de Google desde el frontend.
- * 2️⃣ Verifica la firma y la validez del token con GoogleService.
- * 3️⃣ Obtiene o crea el usuario en base de datos con UsuarioSocialService.
- * 4️⃣ Emite un JWT de acceso (access token).
- * 5️⃣ Genera un refresh token (persistente) y lo guarda en cookie httpOnly.
+ * Login mediante Google:
+ * 1) Recibe idToken del front
+ * 2) Verifica con GoogleService
+ * 3) Upsert de usuario
+ * 4) Emite access token
+ * 5) Setea refresh token en cookie HttpOnly
  */
 @RestController
 @RequestMapping("/auth")
@@ -42,46 +41,51 @@ public class GoogleAuthController {
         this.sessionHelper = sessionHelper;
     }
 
-    /**
-     * Endpoint para iniciar sesión con Google.
-     * 
-     * @param body JSON con el idToken de Google.
-     * @param req  Request (para obtener IP y User-Agent).
-     * @param res  Response (para agregar cookie del refresh token).
-     * @return     Access token + información básica del usuario.
-     */
-    @PostMapping("/google")
+    @PostMapping(
+        path = "/google",
+        consumes = MediaType.APPLICATION_JSON_VALUE,
+        produces = MediaType.APPLICATION_JSON_VALUE
+    )
     public ResponseEntity<?> loginWithGoogle(@RequestBody Map<String, String> body,
                                              HttpServletRequest req,
                                              HttpServletResponse res) {
         try {
-            // 1️⃣ Validar el idToken con Google
+            // 1) Validar entrada
             String idToken = body.get("idToken");
-            var data = googleService.verify(idToken); // Verifica firma y audiencia
-            
-            // 2️⃣ Crear o recuperar el usuario
-            Usuario u = usuarioSocial.getOrCreateFromGoogle(data);
-            
-            // 3️⃣ Emitir JWT de acceso (válido ~15 minutos)
+            if (idToken == null || idToken.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of(
+                    "ok", false,
+                    "error", "idToken requerido"
+                ));
+            }
+
+            // 2) Verificar token con Google (firma, audiencia, exp, etc.)
+            var googleData = googleService.verify(idToken);
+
+            // 3) Crear/actualizar usuario
+            Usuario u = usuarioSocial.getOrCreateFromGoogle(googleData);
+
+            // 4) Emitir access token (corto)
             String accessToken = jwt.issue(u.getId(), "user-" + u.getId(), List.of("USER"));
 
-            // 4️⃣ Emitir refresh token y guardarlo en cookie segura (httpOnly)
+            // 5) Emitir refresh token y setear cookie HttpOnly (path=/auth)
             sessionHelper.attachRefreshCookie(req, res, u.getId());
 
-            // 5️⃣ Responder con datos básicos + access token
+            // 6) Responder al front
             return ResponseEntity.ok(Map.of(
-                    "ok", true,
-                    "usuarioId", u.getId(),
-                    "token", accessToken,
-                    "nombre", u.getNombre(),
-                    "avatarUrl", u.getAvatarUrl()
+                "ok", true,
+                "usuarioId", u.getId(),
+                "nombre", u.getNombre(),
+                "avatarUrl", u.getAvatarUrl(),
+                // nombre estandarizado para el front:
+                "accessToken", accessToken
             ));
 
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.badRequest().body(Map.of(
-                    "ok", false,
-                    "error", e.getMessage()
+                "ok", false,
+                "error", e.getMessage()
             ));
         }
     }

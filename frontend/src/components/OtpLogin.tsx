@@ -7,8 +7,11 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const schema = z.object({
-  telefono: z.string().min(10, "Ingresa un teléfono válido (E.164 o local)"),
-  codigo: z.string().optional()
+  telefono: z
+    .string()
+    .min(10, "Ingresa un teléfono válido")
+    .regex(/^\+?\d{10,15}$/, "Formato sugerido: E.164 (+52155...)"),
+  codigo: z.string().optional(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -16,31 +19,75 @@ type FormData = z.infer<typeof schema>;
 export default function OtpLogin() {
   const { setSession } = useAuth();
   const [enviado, setEnviado] = useState(false);
+  const [loading, setLoading] = useState<"enviar" | "verificar" | null>(null);
   const nav = useNavigate();
 
-  const { register, handleSubmit, formState: { errors }, getValues } = useForm<FormData>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    getValues,
+  } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { telefono: "" }
+    defaultValues: { telefono: "" },
   });
 
   const onEnviar = async () => {
-    const tel = getValues("telefono");
-    await enviarOtp(tel);
-    setEnviado(true);
+    try {
+      setLoading("enviar");
+      const tel = getValues("telefono").replace(/\s+/g, "");
+      await enviarOtp(tel);
+      setEnviado(true);
+    } catch (e) {
+      console.error("Error enviando OTP:", e);
+      alert("No se pudo enviar el código. Intenta de nuevo.");
+    } finally {
+      setLoading(null);
+    }
   };
 
   const onVerificar = async () => {
-    const tel = getValues("telefono");
-    const code = getValues("codigo") ?? "";
-    const res = await verificarOtp(tel, code);
-    const token = res?.token as string;
-    // opcional: pedir datos del usuario con /api/usuarios/me
-    let user = null;
-    try { user = await me(token); } catch {}
-    setSession(token, user ? {
-      id: user.id, nombre: user.nombre, avatarUrl: user.avatarUrl, telefonoE164: user.telefonoE164
-    } : null);
-    nav("/dashboard");
+    try {
+      setLoading("verificar");
+      const tel = getValues("telefono").replace(/\s+/g, "");
+      const code = (getValues("codigo") ?? "").trim();
+
+      if (!code || code.length < 4) {
+        alert("Ingresa el código recibido.");
+        return;
+      }
+
+      // Debe devolver { accessToken }
+      const { accessToken } = await verificarOtp(tel, code);
+
+      // 1) Guarda token en el store para que el interceptor ponga Authorization
+      setSession(accessToken, null);
+
+      // 2) Pide /me con el token ya activo en el interceptor
+      let user = null;
+      try {
+        user = await me().then((r) => r);
+      } catch {
+        /* si falla /me, seguimos con token */
+      }
+
+      // 3) Actualiza usuario (si llegó)
+      if (user) {
+        setSession(accessToken, {
+          id: user.id,
+          nombre: user.nombre,
+          avatarUrl: user.avatarUrl,
+          telefonoE164: user.telefonoE164,
+        });
+      }
+
+      nav("/dashboard");
+    } catch (e) {
+      console.error("Error verificando OTP:", e);
+      alert("Código inválido o expirado. Intenta nuevamente.");
+    } finally {
+      setLoading(null);
+    }
   };
 
   return (
@@ -49,15 +96,21 @@ export default function OtpLogin() {
         <label className="text-sm opacity-80">Teléfono</label>
         <input
           className="mt-1 w-full rounded-lg bg-neutral-800 border border-white/10 px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500/40"
-          placeholder="+52 442 108 3497"
+          placeholder="+52 55 1234 5678"
           {...register("telefono")}
         />
-        {errors.telefono && <p className="text-red-400 text-sm mt-1">{errors.telefono.message}</p>}
+        {errors.telefono && (
+          <p className="text-red-400 text-sm mt-1">{errors.telefono.message}</p>
+        )}
       </div>
 
       {!enviado ? (
-        <button onClick={handleSubmit(onEnviar)} className="w-full rounded-lg bg-emerald-600 hover:bg-emerald-500 py-2 font-medium">
-          Enviar código
+        <button
+          onClick={handleSubmit(onEnviar)}
+          disabled={loading === "enviar"}
+          className="w-full rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 py-2 font-medium"
+        >
+          {loading === "enviar" ? "Enviando..." : "Enviar código"}
         </button>
       ) : (
         <>
@@ -66,11 +119,25 @@ export default function OtpLogin() {
             <input
               className="mt-1 w-full rounded-lg bg-neutral-800 border border-white/10 px-3 py-2 outline-none tracking-widest text-center"
               placeholder="000000"
+              maxLength={6}
               {...register("codigo")}
             />
           </div>
-          <button onClick={handleSubmit(onVerificar)} className="w-full rounded-lg bg-emerald-600 hover:bg-emerald-500 py-2 font-medium">
-            Verificar y entrar
+          <button
+            onClick={handleSubmit(onVerificar)}
+            disabled={loading === "verificar"}
+            className="w-full rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 py-2 font-medium"
+          >
+            {loading === "verificar" ? "Verificando..." : "Verificar y entrar"}
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSubmit(onEnviar)}
+            disabled={loading === "enviar"}
+            className="w-full rounded-lg bg-neutral-800 hover:bg-neutral-700 disabled:opacity-60 py-2 font-medium"
+          >
+            Reenviar código
           </button>
         </>
       )}
