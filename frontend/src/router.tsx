@@ -1,32 +1,92 @@
-import { createBrowserRouter, Navigate } from "react-router-dom";
-import App from "./App";
-import Dashboard from "./views/Dashboard";
+import { createBrowserRouter } from "react-router-dom";
+import ProtectedRoute from "./ProtectedRoute";
+import Home from "./pages/Home";
 import Login from "./pages/Login";
-import ProtectedRoute from "./routes/ProtectedRoute";
+import AppLayout from "./layouts/AppLayout";
+import ServiciosPage from "@/pages/Servicios";
+import BarberosPage from "./pages/Barberos";
+import CitasPage from "./pages/Citas";
+import BookingPage from "./pages/Booking";
+import BarberoDisponibilidadPage from "./pages/BarberoDisponibilidadPage";
+import { RequireRole } from "./RequiereRole";
 
 export const router = createBrowserRouter([
+  // RUTAS CON NAVBAR
   {
-    path: "/",
-    element: <App />,
+    element: <AppLayout />,
     children: [
-      // Redirige raíz → dashboard
-      { index: true, element: <Navigate to="/dashboard" replace /> },
+      { path: "/login", element: <Login /> },
 
-      // Página de autenticación (login OTP / social)
-      { path: "auth", element: <Login /> },
-
-      // Rutas privadas
       {
-        element: <ProtectedRoute />,
-        children: [
-          { path: "dashboard", element: <Dashboard /> },
-          // Puedes agregar más rutas privadas aquí:
-          // { path: "perfil", element: <Perfil /> },
-        ],
+        path: "/",
+        element: (
+          <ProtectedRoute>
+            <Home />
+          </ProtectedRoute>
+        ),
       },
 
-      // Fallback si la ruta no existe
-      { path: "*", element: <Navigate to="/dashboard" replace /> },
+      {
+        path: "/servicios",
+        element: (
+          <ProtectedRoute>
+            <RequireRole roles={["ADMIN"]}>
+              <ServiciosPage />
+            </RequireRole>
+          </ProtectedRoute>
+        ),
+      },
+
+      {
+        path: "/barberos",
+        element: (
+          <ProtectedRoute>
+            <RequireRole roles={["ADMIN"]}>
+              <BarberosPage />
+            </RequireRole>
+          </ProtectedRoute>
+        ),
+      },
+
+      {
+        path: "/citas",
+        element: (
+          <ProtectedRoute>
+            <RequireRole roles={["ADMIN", "BARBERO"]}>
+              <CitasPage />
+            </RequireRole>
+          </ProtectedRoute>
+        ),
+      },
+
+      {
+        path: "/booking",
+        element: (
+          <ProtectedRoute>
+            <RequireRole roles={["CLIENTE", "ADMIN"]}>
+              <BookingPage />
+            </RequireRole>
+          </ProtectedRoute>
+        ),
+      },
+
+      // ✅ NUEVA PANTALLA DE DISPONIBILIDAD
+      {
+        path: "/disponibilidad",
+        element: (
+          <ProtectedRoute>
+            <RequireRole roles={["ADMIN", "BARBERO"]}>
+              <BarberoDisponibilidadPage />
+            </RequireRole>
+          </ProtectedRoute>
+        ),
+      },
     ],
+  },
+
+  // RUTAS SIN NAVBAR
+  {
+    path: "/login",
+    element: <Login />,
   },
 ]);

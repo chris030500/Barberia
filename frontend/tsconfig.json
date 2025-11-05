@@ -1,21 +1,21 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
-    "moduleResolution": "bundler",
+    "moduleResolution": "Bundler",        // o "NodeNext" si prefieres Node-style
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx",
-
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"]
-    },
-
-    "types": ["vite/client"],
+    "baseUrl": "./src",
+    "paths": { "@/*": ["*"] },
+    "types": ["vite/client"],             // habilita import.meta.env tipado
+    "allowJs": false,
+    "strict": true,
     "skipLibCheck": true,
+    "noEmit": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true
+    "useDefineForClassFields": true,
+    "moduleDetection": "force"            // evita falsos positivos en el editor
   },
-  "include": ["src", "vite.config.ts"]
+  "include": ["src"]
 }

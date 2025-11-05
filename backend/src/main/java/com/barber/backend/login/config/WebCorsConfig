@@ -1,0 +1,27 @@
+package com.barber.backend.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.cors.*;
+import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource; // <-- si usas webflux, si no quítalo
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource; // <-- para servlet clásico
+
+@Configuration
+public class WebCorsConfig {
+
+  @Bean
+  public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration cfg = new CorsConfiguration();
+    cfg.setAllowCredentials(true);
+    cfg.addAllowedHeader("*");
+    cfg.addAllowedMethod("*");
+
+    // TODO: ajusta a tu origen de dev/prod
+    cfg.addAllowedOriginPattern("http://localhost:5173");
+    cfg.addAllowedOriginPattern("https://tu-dominio.com");
+
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", cfg);
+    return source;
+  }
+}

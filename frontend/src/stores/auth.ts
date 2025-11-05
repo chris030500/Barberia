@@ -1,63 +1,83 @@
-import { create } from "zustand";
-import { refresh, logout as apiLogout } from "../api/auth";
+// src/stores/auth.ts
+import { create } from 'zustand'
+import { getAuth, signOut } from 'firebase/auth'
 
-type User = {
-  id: number;
-  nombre?: string;
-  avatarUrl?: string;
-  telefonoE164?: string;
-};
+export type Role = 'ADMIN' | 'BARBERO' | 'CLIENTE'
+
+export type User = {
+  id: number
+  nombre?: string
+  apellido?: string
+  email?: string | null
+  username?: string
+  telefonoE164?: string | null
+  telefonoVerificado?: boolean
+  proveedor?: string | null
+  proveedorId?: string | null
+  avatarUrl?: string | null
+
+  // NUEVO (opcionales, porque puede no venir en todos los tokens/respuestas)
+  roles?: Role[]
+  barberoId?: number | null
+  clienteId?: number | null
+}
 
 type AuthState = {
-  accessToken: string | null;
-  user: User | null;
+  accessToken: string | null
+  user: User | null
+  loading: boolean
+  setLoading: (v: boolean) => void
+  setSession: (token: string | null, user?: User | null) => void
+  logout: () => Promise<void>
 
-  // Métodos
-  setSession: (token: string | null, user?: User | null) => void;
-  clear: () => void;
-  refresh: () => Promise<string | null>;
-  logout: () => Promise<void>;
-};
+  // Selectores/computeds prácticos
+  isAdmin: () => boolean
+  isBarberoOnly: () => boolean
+  barberoFiltroId: () => number | undefined
+}
 
 export const useAuth = create<AuthState>((set, get) => ({
   accessToken: null,
   user: null,
+  loading: false,
 
-  /** Guarda o actualiza el token y usuario */
-  setSession: (accessToken, user = null) => set({ accessToken, user }),
+  setLoading: (v) => set({ loading: v }),
 
-  /** Limpia por completo la sesión (logout local) */
-  clear: () => set({ accessToken: null, user: null }),
+  setSession: (token, user = null) => set({ accessToken: token, user }),
 
-  /** Intenta renovar el access token usando la cookie de refresh */
-  refresh: async () => {
-    try {
-      const res = await refresh(); // tu endpoint /auth/refresh
-      const token = res?.accessToken ?? null;
-
-      if (token) {
-        set({ accessToken: token });
-        return token;
-      }
-
-      // si no devolvió token válido → limpiar
-      set({ accessToken: null, user: null });
-      return null;
-    } catch (err) {
-      console.warn("❌ Refresh falló:", err);
-      set({ accessToken: null, user: null });
-      return null;
-    }
-  },
-
-  /** Cierra sesión tanto en backend como en store local */
   logout: async () => {
+    const auth = getAuth()
+    set({ loading: true })
     try {
-      await apiLogout(); // /auth/logout → limpia cookie refresh
-    } catch (e) {
-      console.warn("Error al hacer logout remoto:", e);
+      await signOut(auth)
+    } catch (err) {
+      console.error('Error al cerrar sesión en Firebase', err)
     } finally {
-      set({ accessToken: null, user: null });
+      set({ accessToken: null, user: null, loading: false })
     }
   },
-}));
+
+  // === Helpers de rol/permiso ===
+  isAdmin: () => {
+    const roles = get().user?.roles ?? []
+    return roles.includes('ADMIN')
+  },
+
+  // true si tiene BARBERO y NO es admin
+  isBarberoOnly: () => {
+    const roles = get().user?.roles ?? []
+    return roles.includes('BARBERO') && !roles.includes('ADMIN')
+  },
+
+  /**
+   * Si es barbero (y no admin), devuelve su barberoId para filtrar citas.
+   * Admin ve todo (regresa undefined para no filtrar).
+   */
+  barberoFiltroId: () => {
+    const u = get().user
+    const roles = u?.roles ?? []
+    const esAdmin = roles.includes('ADMIN')
+    const esBarbero = roles.includes('BARBERO')
+    return !esAdmin && esBarbero ? (u?.barberoId ?? undefined) : undefined
+  },
+}))

@@ -2,17 +2,134 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ===== Tokens y tema base ===== */
 :root {
-  --radius: 12px;
+  --brand: #10b981;
+  --brand-hover: #059669;
+  --border: rgba(255, 255, 255, 0.08);
+  --surface: rgba(255, 255, 255, 0.03);
+  --bg: #0d0d0f;
+  --text-muted: #a1a1aa;
+
+  /* Altura del navbar (usa la misma que en el componente Navbar) */
+  --nav-h: 64px; /* h-16 */
 }
 
-html, body, #root {
-  height: 100%;
+html, body, #root { height: 100%; }
+
+html {
+  color-scheme: dark;                   /* mejor integración en OS oscuro */
+  scrollbar-gutter: stable both-edges;  /* evita “saltos” al aparecer scrollbar */
+  -webkit-text-size-adjust: 100%;       /* evita zoom raro en iOS */
 }
 
 body {
-  font-family: "Inter", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
-  @apply bg-neutral-950 text-neutral-100;
+  @apply bg-[var(--bg)] text-white font-sans;
+  font-family: "Inter", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+
+  /* Fijamos alto visible moderno para móviles (corrige 100vh en iOS/Android) */
+  min-height: 100svh;
+  overflow-x: hidden;                   /* evita scroll lateral por sombras/recaptcha */
+  overscroll-behavior-y: contain;       /* suprime “rebote” que mueve layout */
 }
 
-/* (Opcional) tu paleta/tema, si la quieres mantener, puede quedarse como CSS normal */
+/* ===== Safe areas (iOS notch, barras) ===== */
+.safe-top    { padding-top: var(--nav-h); }
+.safe-right  { padding-right: 0; }
+.safe-bottom { padding-bottom: 0; }
+.safe-left   { padding-left: 0; }
+
+@supports (padding: max(0px)) {
+  .safe-top    { padding-top: calc(var(--nav-h) + env(safe-area-inset-top)); }
+  .safe-right  { padding-right: env(safe-area-inset-right); }
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+  .safe-left   { padding-left: env(safe-area-inset-left); }
+}
+
+/* contenedor ancho + paddings coherentes */
+.app-container { @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8; }
+
+/* padding lateral seguro y SIMÉTRICO */
+.safe-inline { padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+@supports not (padding: max(0px)) {
+  .safe-inline { padding-left: 0; padding-right: 0; }
+}
+
+/* Página que descuenta el alto del navbar fijo y respeta barras inferiores */
+.min-h-app {
+  min-height: calc(100svh - var(--nav-h));
+}
+
+/* Centro absoluto reutilizable para vistas que deban ir centradas */
+.center-page {
+  /* Se usa junto con .min-h-app cuando quieras centrar vertical y horizontal */
+  display: grid;
+  place-items: center;
+}
+
+/* ===== Tarjeta base para formularios (Login, etc.) ===== */
+.card-surface {
+  @apply rounded-2xl border border-zinc-800/80 bg-neutral-900/60 backdrop-blur p-6;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.03),
+    0 12px 30px -12px rgba(0,0,0,0.5);
+}
+
+.card-title { @apply text-2xl font-semibold mb-2; }
+.card-sub   { @apply text-sm text-zinc-400; }
+
+/* ===== Separador “o continúa con” accesible ===== */
+.hr-or {
+  @apply my-4 flex items-center gap-3 text-[12px] text-zinc-500;
+}
+.hr-or::before,
+.hr-or::after {
+  content: "";
+  @apply flex-1 h-px bg-zinc-800/80;
+}
+
+/* ===== Inputs “pill” (como OTP) con focus visible ===== */
+.input-pill {
+  @apply flex items-center gap-2 rounded-2xl border border-[var(--border)]
+         bg-[var(--surface)] h-11 px-2
+         shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]
+         focus-within:border-emerald-700 focus-within:ring focus-within:ring-emerald-600/30;
+}
+.input-pill input {
+  @apply flex-1 bg-transparent px-2 outline-none placeholder:text-neutral-600 text-[15px];
+}
+
+/* ===== Botones base ===== */
+.btn {
+  @apply inline-flex items-center justify-center rounded-xl border px-3 h-10 text-sm font-medium
+         transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40
+         disabled:opacity-50 disabled:cursor-not-allowed;
+}
+.btn-ghost { @apply border-zinc-700 bg-zinc-800 text-zinc-100 hover:bg-zinc-700 active:bg-zinc-600; }
+.btn-brand { @apply border-emerald-700 bg-emerald-900/30 hover:bg-emerald-900/50; }
+
+/* ===== reCAPTCHA: reserva mínimo para que no desplace el layout ===== */
+#recaptcha-slot {
+  min-width: 140px;
+  min-height: 32px;
+}
+
+/* ===== Refinamientos móviles ===== */
+* { -webkit-tap-highlight-color: transparent; }
+
+@media (max-width: 360px) {
+  /* Respira un poquito en pantallas ultra estrechas */
+  .xs\\:px-1 { padding-left: 0.25rem; padding-right: 0.25rem; }
+}
+
+/* Respeta usuarios con “reducir movimiento” */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

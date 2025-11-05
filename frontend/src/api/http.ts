@@ -1,67 +1,50 @@
-// src/api/http.ts
-import axios, { AxiosError, AxiosInstance, AxiosHeaders, InternalAxiosRequestConfig } from "axios";
+import axios, { AxiosError } from "axios";
+import toast from "react-hot-toast";
 import { useAuth } from "@/stores/auth";
 
-const api: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+export const http = axios.create({
+  baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:8080",
   withCredentials: true,
 });
 
-function ensureHeaders(h: InternalAxiosRequestConfig["headers"]) {
-  return h instanceof AxiosHeaders ? h : new AxiosHeaders(h);
-}
-
-api.interceptors.request.use((config) => {
+// 🟢 Interceptor de request
+http.interceptors.request.use((config) => {
   const { accessToken } = useAuth.getState();
+
   if (accessToken) {
-    const headers = ensureHeaders(config.headers);
-    headers.set("Authorization", `Bearer ${accessToken}`);
-    config.headers = headers; // 👈 ya es AxiosHeaders
+    // 🔧 asegúrate de inicializar headers correctamente
+    if (!config.headers) {
+      config.headers = new axios.AxiosHeaders();
+    }
+
+    // Añade el Authorization header
+    config.headers.set("Authorization", `Bearer ${accessToken}`);
   }
+
   return config;
 });
 
-let isRefreshing = false;
-let pendingQueue: Array<(token: string | null) => void> = [];
-const flushQueue = (t: string | null) => { pendingQueue.forEach(cb => cb(t)); pendingQueue = []; };
-
-api.interceptors.response.use(
+// 🔴 Interceptor de response
+http.interceptors.response.use(
   (res) => res,
   async (error: AxiosError) => {
-    const original = error.config as any;
-    if (!error.response || error.response.status !== 401 || original?._retry) throw error;
-    original._retry = true;
+    const status = error?.response?.status;
 
-    if (isRefreshing) {
-      return new Promise((resolve, reject) => {
-        pendingQueue.push((token) => {
-          const headers = ensureHeaders(original.headers);
-          if (token) headers.set("Authorization", `Bearer ${token}`);
-          original.headers = headers;
-          (api.request as any)(original).then(resolve).catch(reject);
-        });
-      });
+    if (status === 401) {
+      const { logout } = useAuth.getState();
+      await logout();
+      if (location.pathname !== "/login") {
+        toast.error("Tu sesión ha expirado. Inicia sesión nuevamente.");
+        location.href = "/login";
+      }
+    } else if (status === 403) {
+      toast.error("Acceso denegado. No tienes permisos suficientes.");
+    } else if (status && status >= 500) {
+      toast.error("Error del servidor. Intenta de nuevo más tarde.");
+    } else if (!error.response) {
+      toast.error("Sin conexión con el servidor.");
     }
 
-    isRefreshing = true;
-    try {
-      const token = await useAuth.getState().refresh();
-      flushQueue(token);
-
-      const headers = ensureHeaders(original.headers);
-      if (token) headers.set("Authorization", `Bearer ${token}`);
-      original.headers = headers;
-
-      return api.request(original);
-    } catch (e) {
-      flushQueue(null);
-      await useAuth.getState().logout?.();
-      throw e;
-    } finally {
-      isRefreshing = false;
-    }
+    return Promise.reject(error);
   }
 );
-
-export const http = api;
-export default api;

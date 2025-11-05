@@ -2,6 +2,7 @@ package com.barber.backend.login.controller;
 
 import com.barber.backend.login.service.JwtService;
 import com.barber.backend.login.service.RefreshTokenService;
+import com.google.common.net.HttpHeaders;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -98,15 +99,16 @@ public class SessionController {
                 "accessToken", access));
     }
 
-    @PostMapping("/logout")
-    public ResponseEntity<?> logout(
-            @CookieValue(value = "refresh_token", required = false) String refreshCookie,
-            HttpServletResponse res) {
-        // Con el modelo stateless no hay “revocación” en servidor;
-        // limpiar la cookie es suficiente a nivel cliente.
-        // (Si en el futuro pasas a modelo stateful, aquí revocas en base de datos /
-        // blacklist.)
-        clearRefreshCookie(res);
+    @PostMapping("/auth/logout")
+    public ResponseEntity<?> logout(HttpServletResponse res) {
+        // borra refresh cookie httpOnly (si la usas)
+        ResponseCookie cookie = ResponseCookie.from("refresh_token", "")
+                .path("/")
+                .httpOnly(true)
+                .secure(false) // true si usas HTTPS
+                .maxAge(0)
+                .build();
+        res.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
         return ResponseEntity.ok(Map.of("ok", true));
     }
 }

@@ -1,24 +1,26 @@
-version: "3.9"
+version: "3.8"
 
 services:
   mysql:
-    image: mysql:5.7
+    image: mysql:8.0
     container_name: barber-mysql
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: mydatabase
-      TZ: UTC
-    command: ["mysqld", "--explicit_defaults_for_timestamp=1"]
     ports:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p$$MYSQL_ROOT_PASSWORD --silent"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-prootpassword"]
       interval: 5s
       timeout: 3s
-      retries: 30
-      start_period: 20s
+      retries: 20
+    command: >
+      mysqld
+      --default-authentication-plugin=caching_sha2_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
     restart: unless-stopped
 
   backend:
@@ -30,26 +32,26 @@ services:
       mysql:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/mydatabase?useSSL=false&serverTimezone=UTC
+      # === Base de datos (ojo: host "mysql" desde la red del compose) ===
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/mydatabase?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      SPRING_JPA_HIBERNATE_DDL_AUTO: none
+      SPRING_DATASOURCE_PASSWORD: rootpassword
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_SHOW_SQL: "true"
 
-      # JWT (mueve estos a .env y rota llaves)
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_REFRESH_SECRETBASE64: ${JWT_REFRESH_SECRETBASE64}
+      # === JWT (propios) ===
+      JWT_SECRET: "cambia-esta-clave-super-secreta-de-32+caracteres"
+      JWT_REFRESH_SECRETBASE64: "dW5hX2NsYXZlX2RlX2VqZW1wbG8tMzItY2hhcnMtdW5hLWtleS1iYXNlNjQ="
       JWT_REFRESH_TTL_SECONDS: "2592000"
 
-      # OAuth / Twilio (mueve y rota)
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-      FACEBOOK_APP_ID: ${FACEBOOK_APP_ID}
-      FACEBOOK_APP_SECRET: ${FACEBOOK_APP_SECRET}
-      TWILIO_ENABLED: ${TWILIO_ENABLED}
-      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}
-      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
-      TWILIO_FROM: ${TWILIO_FROM}
-      TWILIO_WHATSAPP_FROM: ${TWILIO_WHATSAPP_FROM}
+      # === Firebase Admin ===
+      GOOGLE_APPLICATION_CREDENTIALS: /app/secrets/firebase-adminsdk.json
+
+      # === Zona horaria (opcional) ===
+      TZ: America/Mexico_City
+    volumes:
+      # Asegúrate que este archivo EXISTE en el host:
+      - ./secrets/barber-pichi-firebase-adminsdk-wdme1-5a63deb74a.json:/app/secrets/firebase-adminsdk.json:ro
     ports:
       - "8080:8080"
     restart: unless-stopped
@@ -60,14 +62,23 @@ services:
       dockerfile: Dockerfile.dev
     container_name: barber-frontend
     environment:
-      VITE_API_URL=http://localhost:8080
+      # URL del backend (Docker resuelve por nombre de servicio)
+      VITE_API_URL: http://localhost:8080
+
+      # Firebase Web SDK (pon tus valores reales)
+      VITE_FB_API_KEY: "AIzaSyA9tgGelus76grhfm58s4-oxMMIfLTXKx4"
+      VITE_FB_AUTH_DOMAIN: "barber-pichi.firebaseapp.com"
+      VITE_FB_PROJECT_ID: "barber-pichi"
+      VITE_FB_APP_ID: "1:665177667750:web:a92c39874b89a0b7921c67"
     volumes:
       - ./frontend:/app
+      # No montes node_modules para evitar conflictos
       - /app/node_modules
     ports:
       - "5173:5173"
     depends_on:
-      - backend
+      backend:
+        condition: service_started
     restart: unless-stopped
 
 volumes:
