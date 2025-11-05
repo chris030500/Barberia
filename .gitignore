@@ -9,3 +9,7 @@ secrets/
 # Node
 node_modules/
 dist/
+
+# Ignorar archivo docker-compose.yml
+docker-compose.yml
+
