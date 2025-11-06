@@ -14,7 +14,9 @@ export default function BookingPage() {
   const [barberos, setBarberos] = useState<BarberoLite[]>([]);
   const [servicioId, setServicioId] = useState<number | "">("");
   const [barberoId, setBarberoId] = useState<number | "">("");
-  const [fecha, setFecha] = useState<string>(() => new Date().toISOString().slice(0,10));
+  const [fecha, setFecha] = useState<string>(() =>
+    new Date().toISOString().slice(0, 10)
+  );
   const [hhmm, setHhmm] = useState<string>("");
 
   const user = useAuth((s) => s.user);
@@ -36,10 +38,17 @@ export default function BookingPage() {
     (async () => {
       try {
         const [sv, bs] = await Promise.all([
-          listServicios({ page: 0, size: 500, sort: "nombre,asc", soloActivos: true }),
-          listBarberosLite()
+          listServicios({
+            page: 0,
+            size: 500,
+            sort: "nombre,asc",
+            soloActivos: true,
+          }),
+          listBarberosLite(),
         ]);
-        const arr = ((sv as any).data?.content ?? (sv as any)?.content ?? []) as ServicioDTO[];
+        const arr = ((sv as any).data?.content ??
+          (sv as any)?.content ??
+          []) as ServicioDTO[];
         setServicios(arr);
         setBarberos(bs);
       } catch (e) {
@@ -151,11 +160,17 @@ export default function BookingPage() {
             <label className="block text-sm text-zinc-400 mb-1">Servicio</label>
             <select
               value={servicioId}
-              onChange={(e) => setServicioId(e.target.value ? Number(e.target.value) : "")}
+              onChange={(e) =>
+                setServicioId(e.target.value ? Number(e.target.value) : "")
+              }
               className="w-full rounded-xl border border-zinc-800 bg-neutral-900 px-3 py-2 outline-none focus:border-emerald-700"
             >
               <option value="">— Selecciona —</option>
-              {servicios.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
+              {servicios.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.nombre}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -164,11 +179,17 @@ export default function BookingPage() {
             <label className="block text-sm text-zinc-400 mb-1">Barbero</label>
             <select
               value={barberoId}
-              onChange={(e) => setBarberoId(e.target.value ? Number(e.target.value) : "")}
+              onChange={(e) =>
+                setBarberoId(e.target.value ? Number(e.target.value) : "")
+              }
               className="w-full rounded-xl border border-zinc-800 bg-neutral-900 px-3 py-2 outline-none focus:border-emerald-700"
             >
               <option value="">— Selecciona —</option>
-              {barberos.map(b => <option key={b.id} value={b.id}>{b.nombre}</option>)}
+              {barberos.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.nombre}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -182,7 +203,11 @@ export default function BookingPage() {
                 onFechaChange={setFecha}
                 onPickSlot={onPickSlot}
               />
-              {hhmm && <p className="mt-2 text-sm text-emerald-400">Seleccionado: {fecha} {hhmm}</p>}
+              {hhmm && (
+                <p className="mt-2 text-sm text-emerald-400">
+                  Seleccionado: {fecha} {hhmm}
+                </p>
+              )}
             </div>
           )}
         </div>
