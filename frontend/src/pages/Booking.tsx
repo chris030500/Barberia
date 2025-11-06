@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { listServicios, type ServicioDTO } from "@/api/servicios/services";
 import { listBarberosLite, type BarberoLite } from "@/api/barberos";
 import BookingDateStep from "@/components/booking/BookingDateStep";
 import { createCita } from "@/api/citas";
+import type { CitaSaveReq } from "@/api/citas/types";
 import toast from "react-hot-toast";
 import { localInputToIso } from "@/lib/datetime";
+import { useAuth } from "@/stores/auth";
 
 export default function BookingPage() {
   const [servicios, setServicios] = useState<ServicioDTO[]>([]);
@@ -14,9 +17,20 @@ export default function BookingPage() {
   const [fecha, setFecha] = useState<string>(() => new Date().toISOString().slice(0,10));
   const [hhmm, setHhmm] = useState<string>("");
 
+  const user = useAuth((s) => s.user);
+  const navigate = useNavigate();
+  const roles = user?.roles ?? [];
+  const puedeEditarDatosCliente = roles.includes("ADMIN") || roles.includes("BARBERO");
+  const sessionNombre = (user?.nombre ?? "").trim();
+  const sessionTel = (user?.telefonoE164 ?? "").trim();
+
   // cliente
-  const [nombre, setNombre] = useState("");
-  const [tel, setTel] = useState("");
+  const [nombre, setNombre] = useState(sessionNombre);
+  const [tel, setTel] = useState(sessionTel);
+  const [submitting, setSubmitting] = useState(false);
+
+  const allowNombreOverride = puedeEditarDatosCliente || !sessionNombre;
+  const allowTelOverride = puedeEditarDatosCliente || !sessionTel;
 
   useEffect(() => {
     (async () => {
@@ -35,36 +49,94 @@ export default function BookingPage() {
     })();
   }, []);
 
+  useEffect(() => {
+    setNombre((prev) => {
+      if (!allowNombreOverride) {
+        return sessionNombre;
+      }
+      if (!prev && sessionNombre) {
+        return sessionNombre;
+      }
+      return prev;
+    });
+  }, [allowNombreOverride, sessionNombre]);
+
+  useEffect(() => {
+    setTel((prev) => {
+      if (!allowTelOverride) {
+        return sessionTel;
+      }
+      if (!prev && sessionTel) {
+        return sessionTel;
+      }
+      return prev;
+    });
+  }, [allowTelOverride, sessionTel]);
+
   const onPickSlot = (hhmmSel: string) => setHhmm(hhmmSel);
 
   const reservar = async () => {
+    if (submitting) return;
     try {
+      if (!user) return toast.error("Debes iniciar sesión para reservar");
       if (!servicioId) return toast.error("Selecciona un servicio");
       if (!barberoId) return toast.error("Selecciona un barbero");
       if (!fecha || !hhmm) return toast.error("Selecciona un horario");
-      if (!nombre.trim()) return toast.error("Ingresa tu nombre");
+
+      const nombreTrim = nombre.trim();
+      if (!sessionNombre && !nombreTrim) {
+        return toast.error("Ingresa tu nombre");
+      }
 
       const iso = localInputToIso(`${fecha}T${hhmm}:00`);
-      const res = await createCita({
+      const body: CitaSaveReq = {
         barberoId: Number(barberoId),
         servicioId: Number(servicioId),
-        clienteNombre: nombre.trim(),
-        clienteTelE164: tel.trim() || null,
         inicio: iso,
         overrideDuracionMin: null,
         overridePrecioCentavos: null,
         notas: null
-      });
-      const saved = (res as any).data ?? res;
+      };
+
+      if (nombreTrim && (!sessionNombre || nombreTrim !== sessionNombre)) {
+        body.clienteNombre = nombreTrim;
+      }
+
+      const telTrim = tel.trim();
+      if (telTrim && (!sessionTel || telTrim !== sessionTel)) {
+        body.clienteTelE164 = telTrim;
+      } else if (!telTrim && !sessionTel && allowTelOverride) {
+        body.clienteTelE164 = null;
+      }
+
+      setSubmitting(true);
+      await createCita(body);
       toast.success("Cita reservada");
       // redirige o muestra confirmación
+      setHhmm("");
+      setFecha(new Date().toISOString().slice(0, 10));
     } catch (e: any) {
+      const status = e?.response?.status;
       const msg = e?.response?.data?.message ?? e?.message ?? "No se pudo reservar";
+      if (status === 412) {
+        const faltantes = Array.isArray(e?.response?.data?.camposFaltantes)
+          ? (e.response.data.camposFaltantes as string[])
+          : undefined;
+        const detalle = faltantes?.length ? `Faltan: ${faltantes.join(", ")}` : undefined;
+        toast.error(detalle ? `Completa tu perfil. ${detalle}` : "Completa tu perfil antes de reservar");
+        navigate("/perfil/completar", {
+          replace: false,
+          state: { from: { pathname: "/booking" }, faltantes },
+        });
+        return;
+      }
       if (String(msg).toLowerCase().includes("empalm")) {
         toast.error("Ese horario se empalmó, intenta otro");
       } else {
         toast.error(msg);
       }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -120,16 +192,44 @@ export default function BookingPage() {
           <div className="space-y-3">
             <div>
               <label className="block text-sm text-zinc-400 mb-1">Nombre *</label>
-              <input className="w-full rounded-xl border border-zinc-800 bg-neutral-900 px-3 py-2 outline-none focus:border-emerald-700"
-                     value={nombre} onChange={(e)=>setNombre(e.target.value)} />
+              <input
+                className="w-full rounded-xl border border-zinc-800 bg-neutral-900 px-3 py-2 outline-none focus:border-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                readOnly={!allowNombreOverride && !!sessionNombre}
+                disabled={!allowNombreOverride && !!sessionNombre}
+                placeholder="Tu nombre"
+              />
+              {!allowNombreOverride && sessionNombre && (
+                <p className="mt-1 text-xs text-zinc-500">
+                  Este dato proviene de tu perfil. Actualízalo en tu cuenta si necesitas cambiarlo.
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-sm text-zinc-400 mb-1">Teléfono (E.164)</label>
-              <input className="w-full rounded-xl border border-zinc-800 bg-neutral-900 px-3 py-2 outline-none focus:border-emerald-700"
-                     value={tel} onChange={(e)=>setTel(e.target.value)} placeholder="+5255..." />
+              <input
+                className="w-full rounded-xl border border-zinc-800 bg-neutral-900 px-3 py-2 outline-none focus:border-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                value={tel}
+                onChange={(e) => setTel(e.target.value)}
+                readOnly={!allowTelOverride && !!sessionTel}
+                disabled={!allowTelOverride && !!sessionTel}
+                placeholder="+5255..."
+              />
+              {!allowTelOverride && sessionTel && (
+                <p className="mt-1 text-xs text-zinc-500">
+                  Usaremos el teléfono de tu perfil para enviarte recordatorios.
+                </p>
+              )}
             </div>
             <div className="flex justify-end">
-              <button onClick={reservar} className="btn btn-brand">Reservar</button>
+              <button
+                onClick={reservar}
+                className="btn btn-brand disabled:opacity-60 disabled:cursor-not-allowed"
+                disabled={submitting}
+              >
+                {submitting ? "Reservando..." : "Reservar"}
+              </button>
             </div>
           </div>
         </div>
