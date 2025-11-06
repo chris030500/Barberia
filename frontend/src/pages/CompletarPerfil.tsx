@@ -73,8 +73,12 @@ export default function CompletarPerfilPage() {
       const from = (location.state as any)?.from?.pathname ?? "/booking";
       navigate(from, { replace: true, state: {} });
     } catch (err: any) {
-      const msg = err?.response?.data?.message ?? err?.message ?? "No se pudo guardar";
-      toast.error(msg);
+      if (err?.response?.status === 409) {
+        toast.error("Ese teléfono ya está asociado a otra cuenta. Usa uno diferente.");
+      } else {
+        const msg = err?.response?.data?.message ?? err?.message ?? "No se pudo guardar";
+        toast.error(msg);
+      }
     } finally {
       setSaving(false);
     }

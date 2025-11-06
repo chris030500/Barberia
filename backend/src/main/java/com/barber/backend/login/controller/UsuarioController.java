@@ -85,6 +85,13 @@ public class UsuarioController {
     if (notBlank(body.telefonoE164)) {
       String nuevoTel = body.telefonoE164.trim();
       if (!nuevoTel.equals(u.getTelefonoE164())) {
+        repo.findByTelefonoE164(nuevoTel)
+            .filter(existente -> !existente.getId().equals(u.getId()))
+            .ifPresent(existente -> {
+              throw new ResponseStatusException(
+                  HttpStatus.CONFLICT,
+                  "El teléfono ya está asociado a otra cuenta");
+            });
         u.setTelefonoE164(nuevoTel);
         u.setTelefonoVerificado(false);
       }

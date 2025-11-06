@@ -94,8 +94,19 @@ public class FirebaseAuthController {
     u.setProveedorId(uid);
 
     if (!isBlank(phone)) {
-      u.setTelefonoE164(phone);
-      u.setTelefonoVerificado(true);
+      String trimmedPhone = phone.trim();
+      boolean telefonoDisponible = usuarioRepo.findByTelefonoE164(trimmedPhone)
+          .map(existing -> existing.getId().equals(u.getId()))
+          .orElse(true);
+      if (telefonoDisponible) {
+        u.setTelefonoE164(trimmedPhone);
+        u.setTelefonoVerificado(true);
+      } else {
+        log.warn(
+            "No se asignó teléfono {} al usuario {} porque ya pertenece a otra cuenta",
+            trimmedPhone,
+            u.getId());
+      }
     }
 
     u.setActualizadoEn(Instant.now());
