@@ -152,12 +152,15 @@ export const BarberoBloqueosManager = forwardRef<BarberoBloqueosManagerHandle, P
     const fmt = (value: string) => dayjs(value).local().format("DD MMM YYYY • HH:mm");
 
     return (
-      <section className="rounded-2xl border border-zinc-800/70 bg-neutral-900/60 p-6 shadow-lg shadow-emerald-900/10">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur shadow-lg shadow-emerald-900/20">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-white">Bloqueos y ausencias</h2>
+            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-emerald-200">
+              Excepciones
+            </div>
+            <h2 className="mt-3 text-xl font-semibold text-white">Bloqueos y ausencias</h2>
             <p className="text-sm text-zinc-400">
-              Administra excepciones para vacaciones, mantenimiento u otros eventos.
+              Define vacaciones, capacitaciones o mantenimientos especiales y mantenlos sincronizados con la agenda.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -165,7 +168,11 @@ export const BarberoBloqueosManager = forwardRef<BarberoBloqueosManagerHandle, P
               <button
                 key={opt.key}
                 onClick={() => setRange(opt.key)}
-                className={`btn btn-ghost h-9 px-3 text-xs ${range === opt.key ? "bg-emerald-500/10 text-emerald-200" : "text-zinc-400"}`}
+                className={`btn h-9 px-3 text-xs ${
+                  range === opt.key
+                    ? "border border-emerald-400/30 bg-emerald-500/10 text-emerald-200"
+                    : "btn-ghost text-zinc-400"
+                }`}
                 disabled={loading}
               >
                 {opt.label}
@@ -186,7 +193,7 @@ export const BarberoBloqueosManager = forwardRef<BarberoBloqueosManagerHandle, P
             Selecciona un barbero para revisar bloqueos.
           </div>
         ) : rows.length === 0 && !loading ? (
-          <div className="mt-8 rounded-xl border border-dashed border-zinc-700 bg-neutral-900/40 p-6 text-center text-sm text-zinc-500">
+          <div className="mt-8 rounded-xl border border-dashed border-white/15 bg-white/5 p-6 text-center text-sm text-zinc-400">
             No hay bloqueos en el rango seleccionado.
           </div>
         ) : (
@@ -199,7 +206,7 @@ export const BarberoBloqueosManager = forwardRef<BarberoBloqueosManagerHandle, P
               rows.map((bloqueo) => (
                 <li
                   key={bloqueo.id}
-                  className="flex items-start justify-between gap-3 rounded-xl border border-zinc-800/80 bg-neutral-900/70 p-5"
+                  className="flex items-start justify-between gap-3 rounded-xl border border-white/10 bg-gradient-to-br from-neutral-900/80 via-neutral-900/40 to-neutral-900/80 p-5"
                 >
                   <div className="flex items-start gap-3">
                     <span className="mt-1 rounded-full bg-emerald-500/20 p-2 text-emerald-300">
@@ -227,7 +234,7 @@ export const BarberoBloqueosManager = forwardRef<BarberoBloqueosManagerHandle, P
 
         {modal.open && (
           <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4 backdrop-blur">
-            <form onSubmit={submitModal} className="w-full max-w-md rounded-2xl border border-zinc-800 bg-neutral-900/90 p-5 space-y-4">
+            <form onSubmit={submitModal} className="w-full max-w-md rounded-3xl border border-white/10 bg-neutral-950/90 p-6 space-y-4 shadow-xl shadow-emerald-900/30">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-white">Nuevo bloqueo</h3>
                 <button type="button" className="btn btn-ghost h-8 px-3" onClick={closeModal}>
@@ -240,7 +247,7 @@ export const BarberoBloqueosManager = forwardRef<BarberoBloqueosManagerHandle, P
                   type="datetime-local"
                   value={modal.inicio}
                   onChange={(e) => setModal((prev) => ({ ...prev, inicio: e.target.value }))}
-                  className="w-full rounded-lg border border-zinc-700 bg-neutral-900 px-3 py-2 text-white outline-none focus:border-emerald-500"
+                  className="w-full rounded-lg border border-white/10 bg-neutral-900 px-3 py-2 text-white outline-none focus:border-emerald-500"
                   required
                 />
               </div>
@@ -250,7 +257,7 @@ export const BarberoBloqueosManager = forwardRef<BarberoBloqueosManagerHandle, P
                   type="datetime-local"
                   value={modal.fin}
                   onChange={(e) => setModal((prev) => ({ ...prev, fin: e.target.value }))}
-                  className="w-full rounded-lg border border-zinc-700 bg-neutral-900 px-3 py-2 text-white outline-none focus:border-emerald-500"
+                  className="w-full rounded-lg border border-white/10 bg-neutral-900 px-3 py-2 text-white outline-none focus:border-emerald-500"
                   required
                 />
               </div>
@@ -259,7 +266,7 @@ export const BarberoBloqueosManager = forwardRef<BarberoBloqueosManagerHandle, P
                 <input
                   value={modal.motivo}
                   onChange={(e) => setModal((prev) => ({ ...prev, motivo: e.target.value }))}
-                  className="w-full rounded-lg border border-zinc-700 bg-neutral-900 px-3 py-2 text-white outline-none focus:border-emerald-500"
+                  className="w-full rounded-lg border border-white/10 bg-neutral-900 px-3 py-2 text-white outline-none focus:border-emerald-500"
                   placeholder="Vacaciones, comisión, mantenimiento…"
                 />
               </div>

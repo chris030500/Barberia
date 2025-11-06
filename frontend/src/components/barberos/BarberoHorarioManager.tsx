@@ -134,15 +134,21 @@ export function BarberoHorarioManager({ barberoId, initialHorario, onSaved, disa
   };
 
   return (
-    <section className="rounded-2xl border border-zinc-800/80 bg-neutral-900/60 p-6 shadow-lg shadow-emerald-900/10">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur shadow-lg shadow-emerald-900/20">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-white">Horario semanal</h2>
+          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-emerald-200">
+            Agenda base
+          </div>
+          <h2 className="mt-3 text-xl font-semibold text-white">Horario semanal</h2>
           <p className="text-sm text-zinc-400">
-            Define las franjas recurrentes en las que el barbero ofrece citas.
+            Ajusta los bloques recurrentes del barbero y mantén la operación sincronizada con la demanda.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-zinc-300">
+            {barberoId ? `${resumenSemana} día(s) activos` : "Sin selección"}
+          </span>
           <button
             className="btn btn-ghost h-10 px-3 text-xs"
             onClick={() => aplicarATodos(1)}
@@ -166,21 +172,28 @@ export function BarberoHorarioManager({ barberoId, initialHorario, onSaved, disa
           Selecciona un barbero para gestionar su disponibilidad.
         </div>
       ) : (
-        <div className="mt-6 overflow-hidden rounded-2xl border border-zinc-800/80">
-          <div className="hidden md:grid md:grid-cols-[160px_120px_160px_160px_1fr] md:gap-0 md:bg-neutral-900/70 md:text-xs md:uppercase md:text-zinc-500">
-            <div className="px-5 py-3">Día</div>
-            <div className="px-5 py-3">Activo</div>
-            <div className="px-5 py-3">Desde</div>
-            <div className="px-5 py-3">Hasta</div>
-            <div className="px-5 py-3">Resumen</div>
+        <div className="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.02]">
+          <div className="hidden md:grid md:grid-cols-[160px_120px_160px_160px_1fr] md:bg-white/5 md:text-xs md:uppercase md:text-zinc-500">
+            <div className="px-5 py-3 tracking-[0.2em]">Día</div>
+            <div className="px-5 py-3 tracking-[0.2em]">Activo</div>
+            <div className="px-5 py-3 tracking-[0.2em]">Desde</div>
+            <div className="px-5 py-3 tracking-[0.2em]">Hasta</div>
+            <div className="px-5 py-3 tracking-[0.2em]">Resumen</div>
           </div>
 
           {dias.map((dia) => (
             <div
               key={dia.dow}
-              className="grid grid-cols-1 gap-4 border-t border-zinc-800/60 bg-neutral-900/40 p-4 text-sm md:grid-cols-[160px_120px_160px_160px_1fr] md:items-center md:gap-0 md:p-0"
+              className="grid grid-cols-1 gap-4 border-t border-white/10 bg-neutral-900/30 p-4 text-sm transition hover:bg-neutral-900/60 md:grid-cols-[160px_120px_160px_160px_1fr] md:items-center md:gap-0 md:p-0"
             >
-              <div className="px-5 py-4 font-medium text-white">{DOW_LABEL[dia.dow]}</div>
+              <div className="px-5 py-4 font-medium text-white">
+                <span className="inline-flex items-center gap-2">
+                  <span
+                    className={`h-2 w-2 rounded-full ${dia.activo ? "bg-emerald-400" : "bg-zinc-600"}`}
+                  />
+                  {DOW_LABEL[dia.dow]}
+                </span>
+              </div>
               <div className="px-5 py-4">
                 <label className="inline-flex items-center gap-2 text-sm text-white/80">
                   <input
@@ -211,16 +224,14 @@ export function BarberoHorarioManager({ barberoId, initialHorario, onSaved, disa
                   className="w-full rounded-lg border border-zinc-700 bg-neutral-900 px-3 py-2 text-white outline-none focus:border-emerald-500 focus:ring-0"
                 />
               </div>
-              <div className="px-5 py-4 text-sm text-zinc-400">
-                {formatResumen(dia)}
-              </div>
+              <div className="px-5 py-4 text-sm text-zinc-400">{formatResumen(dia)}</div>
             </div>
           ))}
         </div>
       )}
 
-      <div className="mt-6 flex flex-col gap-3 border-t border-zinc-800/60 pt-6 sm:flex-row sm:items-center sm:justify-between">
-        <div className="text-xs uppercase tracking-[0.2em] text-zinc-500">
+      <div className="mt-6 flex flex-col gap-3 border-t border-white/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="text-xs uppercase tracking-[0.25em] text-zinc-500">
           {barberoId ? `${resumenSemana} día(s) activos` : "Sin barbero seleccionado"}
         </div>
         <div className="flex items-center gap-2">
