@@ -26,9 +26,16 @@ export default function ProtectedRoute({ children, requireProfileComplete = fals
   const roles = user.roles ?? [];
   const requiereDatosBasicos = requireProfileComplete && roles.includes("CLIENTE");
 
-  const nombreValido = typeof user.nombre === "string" && user.nombre.trim().length > 0;
-  const telefonoValido =
-    typeof user.telefonoE164 === "string" && user.telefonoE164.trim().length > 0;
+  const isDatoPresente = (valor: unknown) => {
+    if (typeof valor !== "string") return false;
+    const trimmed = valor.trim();
+    if (!trimmed) return false;
+    const normalized = trimmed.toLowerCase();
+    return normalized !== "null" && normalized !== "undefined";
+  };
+
+  const nombreValido = isDatoPresente(user.nombre);
+  const telefonoValido = isDatoPresente(user.telefonoE164);
   const perfilCompleto = nombreValido && telefonoValido;
 
   if (requiereDatosBasicos && !perfilCompleto) {
