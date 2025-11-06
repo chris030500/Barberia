@@ -6,6 +6,7 @@ import com.barber.backend.login.model.Usuario;
 import com.barber.backend.login.repository.UsuarioRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -59,6 +60,9 @@ public class UsuarioController {
 
     @Size(max = 512, message = "URL de avatar muy larga")
     public String avatarUrl;
+
+    @Pattern(regexp = "^\\+[1-9]\\d{6,14}$", message = "Teléfono debe estar en formato E.164")
+    public String telefonoE164;
   }
 
   @PutMapping("/me")
@@ -71,10 +75,27 @@ public class UsuarioController {
     Usuario u = repo.findById(uid)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
 
-    if (notBlank(body.nombre))    u.setNombre(body.nombre.trim());
+    if (body.nombre != null) {
+      u.setNombre(sanitizeNombre(body.nombre));
+    }
     if (notBlank(body.apellido))  u.setApellido(body.apellido.trim());
     if (notBlank(body.username))  u.setUsername(body.username.trim());
     if (notBlank(body.avatarUrl)) u.setAvatarUrl(body.avatarUrl.trim());
+
+    if (notBlank(body.telefonoE164)) {
+      String nuevoTel = body.telefonoE164.trim();
+      if (!nuevoTel.equals(u.getTelefonoE164())) {
+        repo.findByTelefonoE164(nuevoTel)
+            .filter(existente -> !existente.getId().equals(u.getId()))
+            .ifPresent(existente -> {
+              throw new ResponseStatusException(
+                  HttpStatus.CONFLICT,
+                  "El teléfono ya está asociado a otra cuenta");
+            });
+        u.setTelefonoE164(nuevoTel);
+        u.setTelefonoVerificado(false);
+      }
+    }
 
     u.setActualizadoEn(Instant.now());
     u = repo.save(u);
@@ -130,12 +151,24 @@ public class UsuarioController {
     return null;
   }
 
-  private static boolean notBlank(String s) {
-    return s != null && !s.isBlank();
+  private static String nz(String s) {
+    if (s == null) return "";
+    String trimmed = s.trim();
+    if (trimmed.isEmpty()) return "";
+    if ("usuario".equalsIgnoreCase(trimmed)) return "";
+    return trimmed;
   }
 
-  private static String nz(String s) {
-    return (s == null || s.isBlank()) ? "" : s;
+  private static String sanitizeNombre(String nombre) {
+    if (nombre == null) return null;
+    String trimmed = nombre.trim();
+    if (trimmed.isEmpty()) return null;
+    if ("usuario".equalsIgnoreCase(trimmed)) return null;
+    return trimmed;
+  }
+
+  private static boolean notBlank(String s) {
+    return s != null && !s.isBlank();
   }
 
   private static UsuarioMeDTO toDto(Usuario u, List<String> roles, Long barberoId, Long clienteId) {
