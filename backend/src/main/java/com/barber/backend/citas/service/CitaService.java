@@ -9,12 +9,18 @@ import com.barber.backend.citas.model.Cita.Estado;
 import com.barber.backend.citas.repository.CitaRepository;
 import com.barber.backend.catalogo.model.Servicio;
 import com.barber.backend.catalogo.repository.ServicioRepository;
+import com.barber.backend.login.exception.PerfilIncompletoException;
+import com.barber.backend.login.model.Usuario;
+import com.barber.backend.login.repository.UsuarioRepository;
+import com.barber.backend.login.security.AppUserPrincipal;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
+import java.util.LinkedHashSet;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 @Service
 public class CitaService {
@@ -22,11 +28,17 @@ public class CitaService {
     private final CitaRepository repo;
     private final BarberoRepository barberoRepo;
     private final ServicioRepository servicioRepo;
+    private final UsuarioRepository usuarioRepo;
 
-    public CitaService(CitaRepository repo, BarberoRepository barberoRepo, ServicioRepository servicioRepo) {
+    public CitaService(
+            CitaRepository repo,
+            BarberoRepository barberoRepo,
+            ServicioRepository servicioRepo,
+            UsuarioRepository usuarioRepo) {
         this.repo = repo;
         this.barberoRepo = barberoRepo;
         this.servicioRepo = servicioRepo;
+        this.usuarioRepo = usuarioRepo;
     }
 
     public Page<CitaDTO> list(Long barberoId, Estado estado, Instant desde, Instant hasta, Pageable pageable) {
@@ -46,7 +58,7 @@ public class CitaService {
     }
 
     @Transactional
-    public CitaDTO create(CitaSaveRequest in) {
+    public CitaDTO create(CitaSaveRequest in, AppUserPrincipal principal) {
         Barbero barbero = barberoRepo.findById(in.barberoId())
                 .orElseThrow(() -> new EntityNotFoundException("Barbero no encontrado"));
         Servicio servicio = servicioRepo.findById(in.servicioId())
@@ -55,8 +67,7 @@ public class CitaService {
         Cita c = new Cita();
         c.setBarbero(barbero);
         c.setServicio(servicio);
-        c.setClienteNombre(in.clienteNombre());
-        c.setClienteTelE164(in.clienteTelE164());
+        applyClienteData(c, in, principal, null, null);
         c.setInicio(in.inicio());
         c.setEstado(Cita.Estado.AGENDADA);
         c.setOverrideDuracionMin(in.overrideDuracionMin());
@@ -80,7 +91,7 @@ public class CitaService {
     }
 
     @Transactional
-    public CitaDTO update(Long id, CitaSaveRequest in) {
+    public CitaDTO update(Long id, CitaSaveRequest in, AppUserPrincipal principal) {
         Cita c = repo.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cita no encontrada"));
 
@@ -91,8 +102,7 @@ public class CitaService {
 
         c.setBarbero(barbero);
         c.setServicio(servicio);
-        c.setClienteNombre(in.clienteNombre());
-        c.setClienteTelE164(in.clienteTelE164());
+        applyClienteData(c, in, principal, c.getClienteNombre(), c.getClienteTelE164());
         c.setInicio(in.inicio());
         c.setOverrideDuracionMin(in.overrideDuracionMin());
         c.setOverridePrecioCentavos(in.overridePrecioCentavos());
@@ -150,4 +160,80 @@ public class CitaService {
                 c.getActualizadoEn()
         );
     }
+
+    private void applyClienteData(
+            Cita cita,
+            CitaSaveRequest in,
+            AppUserPrincipal principal,
+            String currentNombre,
+            String currentTelefono) {
+        ClienteData data = resolveClienteData(in, principal, currentNombre, currentTelefono);
+        cita.setClienteNombre(data.nombre());
+        cita.setClienteTelE164(data.telefono());
+    }
+
+    private ClienteData resolveClienteData(
+            CitaSaveRequest in,
+            AppUserPrincipal principal,
+            String currentNombre,
+            String currentTelefono) {
+        Usuario usuario = resolveUsuario(principal);
+        String overrideNombre = StringUtils.hasText(in.clienteNombre()) ? in.clienteNombre().trim() : null;
+        String overrideTelefono = normalize(in.clienteTelE164());
+
+        String baseNombre = firstNonBlank(
+                overrideNombre,
+                normalize(currentNombre),
+                normalize(usuario.getNombre()),
+                normalize(usuario.getUsername()),
+                principal != null ? normalize(principal.getUsername()) : null);
+
+        String telefono = firstNonBlank(
+                overrideTelefono,
+                normalize(currentTelefono),
+                normalize(usuario.getTelefonoE164()));
+
+        boolean nombreValido = StringUtils.hasText(baseNombre);
+        boolean telefonoValido = StringUtils.hasText(telefono);
+
+        if (!nombreValido || !telefonoValido) {
+            LinkedHashSet<String> faltantes = new LinkedHashSet<>();
+            if (!nombreValido) {
+                faltantes.add("nombre");
+            }
+            if (!telefonoValido) {
+                faltantes.add("teléfono");
+            }
+            throw new PerfilIncompletoException(faltantes);
+        }
+
+        return new ClienteData(baseNombre, telefono);
+    }
+
+    private Usuario resolveUsuario(AppUserPrincipal principal) {
+        if (principal == null || principal.getUserId() == null) {
+            throw new IllegalStateException("Debes iniciar sesión para reservar");
+        }
+
+        return usuarioRepo.findById(principal.getUserId())
+                .orElseThrow(() -> new IllegalStateException("Usuario autenticado no encontrado"));
+    }
+
+    private String normalize(String value) {
+        return value != null ? value.trim() : null;
+    }
+
+    private String firstNonBlank(String... values) {
+        if (values == null) {
+            return null;
+        }
+        for (String value : values) {
+            if (StringUtils.hasText(value)) {
+                return value.trim();
+            }
+        }
+        return null;
+    }
+
+    private record ClienteData(String nombre, String telefono) {}
 }
