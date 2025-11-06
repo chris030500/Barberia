@@ -95,8 +95,9 @@ public class FirebaseAuthController {
 
     if (!isBlank(phone)) {
       String trimmedPhone = phone.trim();
+      Long currentUserId = u.getId();
       boolean telefonoDisponible = usuarioRepo.findByTelefonoE164(trimmedPhone)
-          .map(existing -> existing.getId().equals(u.getId()))
+          .map(existing -> Objects.equals(existing.getId(), currentUserId))
           .orElse(true);
       if (telefonoDisponible) {
         u.setTelefonoE164(trimmedPhone);
