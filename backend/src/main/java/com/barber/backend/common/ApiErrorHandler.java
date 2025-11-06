@@ -20,7 +20,7 @@ public class ApiErrorHandler {
     body.put("fields", ex.getBindingResult()
         .getFieldErrors()
         .stream()
-        .collect(HashMap::new, (m,e)-> m.put(e.getField(), e.getDefaultMessage()), HashMap::putAll));
+        .collect(HashMap::new, (m, e) -> m.put(e.getField(), e.getDefaultMessage()), HashMap::putAll));
     return ResponseEntity.badRequest().body(body);
   }
 
