@@ -85,8 +85,9 @@ public class UsuarioController {
     if (notBlank(body.telefonoE164)) {
       String nuevoTel = body.telefonoE164.trim();
       if (!nuevoTel.equals(u.getTelefonoE164())) {
+        Long currentId = u.getId();
         repo.findByTelefonoE164(nuevoTel)
-            .filter(existente -> !existente.getId().equals(u.getId()))
+            .filter(existente -> !existente.getId().equals(currentId))
             .ifPresent(existente -> {
               throw new ResponseStatusException(
                   HttpStatus.CONFLICT,
@@ -98,13 +99,13 @@ public class UsuarioController {
     }
 
     u.setActualizadoEn(Instant.now());
-    u = repo.save(u);
+    Usuario actualizado = repo.save(u);
 
     List<String> roles = authoritiesToRoles(auth);
     Long barberoId = extractLongFromDetails(auth, req, "barberoId").orElse(null);
     Long clienteId  = extractLongFromDetails(auth, req, "clienteId").orElse(null);
 
-    return ResponseEntity.ok(toDto(u, roles, barberoId, clienteId));
+    return ResponseEntity.ok(toDto(actualizado, roles, barberoId, clienteId));
   }
 
   // =======================
