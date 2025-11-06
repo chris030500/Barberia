@@ -6,6 +6,7 @@ import com.barber.backend.login.model.Usuario;
 import com.barber.backend.login.repository.UsuarioRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -59,6 +60,9 @@ public class UsuarioController {
 
     @Size(max = 512, message = "URL de avatar muy larga")
     public String avatarUrl;
+
+    @Pattern(regexp = "^\\+[1-9]\\d{6,14}$", message = "Teléfono debe estar en formato E.164")
+    public String telefonoE164;
   }
 
   @PutMapping("/me")
@@ -75,6 +79,14 @@ public class UsuarioController {
     if (notBlank(body.apellido))  u.setApellido(body.apellido.trim());
     if (notBlank(body.username))  u.setUsername(body.username.trim());
     if (notBlank(body.avatarUrl)) u.setAvatarUrl(body.avatarUrl.trim());
+
+    if (notBlank(body.telefonoE164)) {
+      String nuevoTel = body.telefonoE164.trim();
+      if (!nuevoTel.equals(u.getTelefonoE164())) {
+        u.setTelefonoE164(nuevoTel);
+        u.setTelefonoVerificado(false);
+      }
+    }
 
     u.setActualizadoEn(Instant.now());
     u = repo.save(u);
