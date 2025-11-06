@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { CalendarRange } from "lucide-react";
 import toast from "react-hot-toast";
 import { listCitas, completarCita, cancelarCita } from "@/api/citas";
 import type { CitaDTO, Page } from "@/api/citas/types";
@@ -125,41 +126,47 @@ export default function CitasPage() {
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Citas</h1>
-          <p className="text-sm text-zinc-400">Administra y controla tus reservaciones.</p>
+    <div className="app-container space-y-8 py-8">
+      <section className="relative overflow-hidden rounded-3xl border border-white/5 bg-gradient-to-br from-emerald-500/10 via-slate-900 to-slate-950 p-6 sm:p-8">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),transparent_65%)]" aria-hidden />
+        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-3">
+            <p className="inline-flex items-center gap-2 text-sm text-emerald-200">
+              <CalendarRange className="h-4 w-4" /> Gestión de citas en vivo
+            </p>
+            <h1 className="text-3xl font-semibold leading-tight text-white">Controla tu agenda al minuto</h1>
+            <p className="max-w-2xl text-sm text-white/70">
+              Filtra por barbero, estado o periodo y toma acciones rápidas para evitar empalmes y maximizar la ocupación.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <button className="btn btn-brand" onClick={onNueva}>Nueva cita</button>
+              <button className="btn btn-ghost" onClick={fetchData}>Actualizar</button>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4 rounded-2xl border border-white/10 bg-black/40 p-5 text-sm text-white/70 backdrop-blur">
+            <div>
+              <p className="text-xs uppercase tracking-[0.18em] text-white/40">Agendadas</p>
+              <p className="mt-1 text-2xl font-semibold text-white">{kpis.ag}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-[0.18em] text-white/40">Completadas</p>
+              <p className="mt-1 text-2xl font-semibold text-white">{kpis.co}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-[0.18em] text-white/40">Canceladas</p>
+              <p className="mt-1 text-2xl font-semibold text-white">{kpis.ca}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-[0.18em] text-white/40">Ingresos página</p>
+              <p className="mt-1 text-2xl font-semibold text-white">{moneyMX(kpis.sum)}</p>
+            </div>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <button className="btn btn-ghost" onClick={fetchData}>Actualizar</button>
-          <button className="btn btn-brand" onClick={onNueva}>Nueva cita</button>
-        </div>
-      </div>
+      </section>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="card-surface p-4">
-          <p className="text-xs text-zinc-500">Total (página)</p>
-          <p className="text-xl font-semibold">{kpis.total}</p>
-        </div>
-        <div className="card-surface p-4">
-          <p className="text-xs text-zinc-500">Agendadas</p>
-          <p className="text-xl font-semibold">{kpis.ag}</p>
-        </div>
-        <div className="card-surface p-4">
-          <p className="text-xs text-zinc-500">Completadas</p>
-          <p className="text-xl font-semibold">{kpis.co}</p>
-        </div>
-        <div className="card-surface p-4">
-          <p className="text-xs text-zinc-500">Ingresos (página)</p>
-          <p className="text-xl font-semibold">{moneyMX(kpis.sum)}</p>
-        </div>
-      </div>
-
-      {/* Filtros */}
-      <div className="card-surface p-4">
+      <div className="rounded-3xl border border-white/5 bg-white/[0.03] p-5">
+        <h2 className="text-base font-semibold text-white">Filtros avanzados</h2>
+        <p className="text-sm text-white/60">Ajusta la búsqueda para encontrar citas específicas.</p>
         <div className="grid md:grid-cols-4 gap-3">
           <div>
             <label className="block text-xs text-zinc-400 mb-1">Desde</label>
@@ -167,7 +174,7 @@ export default function CitasPage() {
               type="datetime-local"
               value={desdeInput}
               onChange={(e) => setDesde(new Date(e.target.value).toISOString())}
-              className="w-full rounded-xl border border-zinc-800 bg-neutral-900/70 px-3 py-2"
+              className="w-full rounded-xl border border-white/10 bg-neutral-950/70 px-3 py-2 text-sm"
             />
           </div>
           <div>
@@ -176,7 +183,7 @@ export default function CitasPage() {
               type="datetime-local"
               value={hastaInput}
               onChange={(e) => setHasta(new Date(e.target.value).toISOString())}
-              className="w-full rounded-xl border border-zinc-800 bg-neutral-900/70 px-3 py-2"
+              className="w-full rounded-xl border border-white/10 bg-neutral-950/70 px-3 py-2 text-sm"
             />
           </div>
           <div>
@@ -186,7 +193,7 @@ export default function CitasPage() {
               placeholder="Ej. 1"
               value={barberoId}
               onChange={(e) => setBarberoId(e.target.value ? Number(e.target.value) : "")}
-              className="w-full rounded-xl border border-zinc-800 bg-neutral-900/70 px-3 py-2"
+              className="w-full rounded-xl border border-white/10 bg-neutral-950/70 px-3 py-2 text-sm"
             />
           </div>
           <div>
@@ -195,7 +202,7 @@ export default function CitasPage() {
               <select
                 value={estado}
                 onChange={(e) => setEstado((e.target.value || "") as any)}
-                className="flex-1 rounded-xl border border-zinc-800 bg-neutral-900/70 px-3 py-2"
+                className="flex-1 rounded-xl border border-white/10 bg-neutral-950/70 px-3 py-2 text-sm"
               >
                 <option value="">Todos</option>
                 <option value="AGENDADA">Agendada</option>
@@ -205,7 +212,7 @@ export default function CitasPage() {
               <select
                 value={sort}
                 onChange={(e) => setSort(e.target.value)}
-                className="w-40 rounded-xl border border-zinc-800 bg-neutral-900/70 px-3 py-2"
+                className="w-40 rounded-xl border border-white/10 bg-neutral-950/70 px-3 py-2 text-sm"
                 title="Ordenar por"
               >
                 <option value="inicio,asc">Inicio ↑</option>
@@ -216,8 +223,7 @@ export default function CitasPage() {
         </div>
       </div>
 
-      {/* Tabla */}
-      <div className="card-surface overflow-hidden">
+      <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.02]">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-neutral-900/40 sticky top-0 z-10">
@@ -293,8 +299,8 @@ export default function CitasPage() {
         </div>
 
         {/* Paginación */}
-        <div className="border-t border-zinc-800 px-4 py-3 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-          <div className="text-xs text-zinc-500">
+        <div className="border-t border-white/5 px-4 py-3 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+          <div className="text-xs text-white/60">
             Página {data ? data.number + 1 : 1} de {data?.totalPages ?? 1} · {data?.totalElements ?? 0} resultados
           </div>
           <div className="flex items-center gap-2">

@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { Sparkles } from "lucide-react";
 import toast from "react-hot-toast";
 import { updateUsuarioMe } from "@/api/usuarios/services";
 import type { Role, UpdateMePayload } from "@/api/usuarios/types";
@@ -89,11 +90,24 @@ export default function CompletarPerfilPage() {
   }
 
   return (
-    <div className="app-container py-6">
-      <div className="max-w-xl mx-auto card-surface">
-        <h1 className="card-title mb-2">Completa tu perfil</h1>
-        <p className="text-sm text-zinc-400 mb-6">
-          Necesitamos tu nombre y un teléfono de contacto para poder agendar tus citas y enviarte recordatorios.
+    <div className="app-container space-y-8 py-8">
+      <section className="relative overflow-hidden rounded-3xl border border-white/5 bg-gradient-to-br from-emerald-500/10 via-slate-900 to-slate-950 p-6 sm:p-8">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.18),transparent_65%)]" aria-hidden />
+        <div className="relative space-y-3">
+          <p className="inline-flex items-center gap-2 text-sm text-emerald-200">
+            <Sparkles className="h-4 w-4" /> Perfil verificado
+          </p>
+          <h1 className="text-3xl font-semibold text-white">Completa tus datos de contacto</h1>
+          <p className="max-w-2xl text-sm text-white/70">
+            Tener tu nombre y teléfono en formato internacional nos permite confirmar citas, enviarte recordatorios y reaccionar rápidamente ante cambios en la agenda.
+          </p>
+        </div>
+      </section>
+
+      <div className="mx-auto w-full max-w-xl rounded-3xl border border-white/10 bg-white/[0.04] p-6 shadow-[0_20px_45px_-35px_rgba(16,185,129,0.6)]">
+        <h2 className="mb-2 text-xl font-semibold text-white">Datos obligatorios</h2>
+        <p className="text-sm text-white/60 mb-6">
+          Ingresa un nombre reconocible y un teléfono válido en formato E.164 para recibir notificaciones sin fricción.
         </p>
         <form className="space-y-4" onSubmit={onSubmit}>
           {faltantes?.length ? (
@@ -112,7 +126,7 @@ export default function CompletarPerfilPage() {
             </label>
             <input
               id="nombre"
-              className="w-full rounded-xl border border-zinc-800 bg-neutral-900 px-3 py-2 outline-none focus:border-emerald-700"
+              className="w-full rounded-xl border border-white/10 bg-neutral-950 px-3 py-2 text-sm outline-none focus:border-emerald-600"
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
               placeholder="Tu nombre"
@@ -125,7 +139,7 @@ export default function CompletarPerfilPage() {
             </label>
             <input
               id="telefono"
-              className="w-full rounded-xl border border-zinc-800 bg-neutral-900 px-3 py-2 outline-none focus:border-emerald-700"
+              className="w-full rounded-xl border border-white/10 bg-neutral-950 px-3 py-2 text-sm outline-none focus:border-emerald-600"
               value={telefono}
               onChange={(e) => setTelefono(e.target.value)}
               placeholder="+525512345678"

@@ -90,4 +90,75 @@ public interface CitaRepository extends JpaRepository<Cita, Long> {
           AND c.inicio >= :desde AND c.inicio < :hasta
       """)
   Long sumIngresosCompletadasBetween(@Param("desde") Instant desde, @Param("hasta") Instant hasta);
+
+  @Query("""
+        SELECT COUNT(c)
+        FROM Cita c
+        WHERE c.barbero.id = :barberoId
+          AND c.estado = :estado
+          AND c.inicio >= :desde AND c.inicio < :hasta
+      """)
+  long countByBarberoAndEstadoBetween(
+      @Param("barberoId") Long barberoId,
+      @Param("estado") com.barber.backend.citas.model.Cita.Estado estado,
+      @Param("desde") Instant desde,
+      @Param("hasta") Instant hasta);
+
+  @Query("""
+        SELECT COALESCE(SUM(COALESCE(c.overridePrecioCentavos, c.servicio.precioCentavos)), 0)
+        FROM Cita c
+        WHERE c.barbero.id = :barberoId
+          AND c.estado = com.barber.backend.citas.model.Cita.Estado.COMPLETADA
+          AND c.inicio >= :desde AND c.inicio < :hasta
+      """)
+  Long sumIngresosCompletadasBarberoBetween(
+      @Param("barberoId") Long barberoId,
+      @Param("desde") Instant desde,
+      @Param("hasta") Instant hasta);
+
+  @Query("""
+        SELECT c
+        FROM Cita c
+        WHERE c.barbero.id = :barberoId
+          AND c.estado = com.barber.backend.citas.model.Cita.Estado.AGENDADA
+          AND c.inicio >= :desde
+        ORDER BY c.inicio ASC
+      """)
+  List<Cita> findProximasCitasBarbero(
+      @Param("barberoId") Long barberoId,
+      @Param("desde") Instant desde,
+      Pageable pageable);
+
+  @Query("""
+        SELECT c
+        FROM Cita c
+        WHERE c.clienteTelE164 = :telefono
+          AND c.estado = com.barber.backend.citas.model.Cita.Estado.AGENDADA
+          AND c.inicio >= :desde
+        ORDER BY c.inicio ASC
+      """)
+  List<Cita> findProximasCitasCliente(
+      @Param("telefono") String telefono,
+      @Param("desde") Instant desde,
+      Pageable pageable);
+
+  long countByClienteTelE164AndEstado(
+      String clienteTelE164,
+      com.barber.backend.citas.model.Cita.Estado estado);
+
+  long countByClienteTelE164AndEstadoAndInicioAfter(
+      String clienteTelE164,
+      com.barber.backend.citas.model.Cita.Estado estado,
+      Instant inicio);
+
+  @Query("""
+        SELECT c
+        FROM Cita c
+        WHERE c.clienteTelE164 = :telefono
+          AND c.estado = com.barber.backend.citas.model.Cita.Estado.COMPLETADA
+        ORDER BY c.inicio DESC
+      """)
+  List<Cita> findUltimasCitasCliente(
+      @Param("telefono") String telefono,
+      Pageable pageable);
 }

@@ -2,6 +2,8 @@ package com.barber.backend.analytics.controller;
 
 import com.barber.backend.analytics.dto.ResumenDashboardDTO;
 import com.barber.backend.analytics.service.AnalyticsService;
+import com.barber.backend.login.security.AppUserPrincipal;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,7 +19,7 @@ public class AnalyticsController {
     }
 
     @GetMapping("/resumen")
-    public ResumenDashboardDTO resumen() {
-        return analyticsService.obtenerResumenDashboard();
+    public ResumenDashboardDTO resumen(@AuthenticationPrincipal AppUserPrincipal principal) {
+        return analyticsService.obtenerResumenDashboard(principal);
     }
 }
