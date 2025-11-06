@@ -11,7 +11,7 @@ export type UsuarioMe = {
   proveedor: string | null;
   proveedorId: string | null;
   avatarUrl: string | null;
-  roles: string[];
+  roles: Role[];
   barberoId: number | null;
   clienteId: number | null;
 };

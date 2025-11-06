@@ -104,7 +104,7 @@ export default function BookingPage() {
         inicio: iso,
         overrideDuracionMin: null,
         overridePrecioCentavos: null,
-        notas: null,
+        notas: null
       };
 
       if (nombreTrim && (!sessionNombre || nombreTrim !== sessionNombre)) {
@@ -126,20 +126,13 @@ export default function BookingPage() {
       setFecha(new Date().toISOString().slice(0, 10));
     } catch (e: any) {
       const status = e?.response?.status;
-      const msg =
-        e?.response?.data?.message ?? e?.message ?? "No se pudo reservar";
+      const msg = e?.response?.data?.message ?? e?.message ?? "No se pudo reservar";
       if (status === 412) {
         const faltantes = Array.isArray(e?.response?.data?.camposFaltantes)
           ? (e.response.data.camposFaltantes as string[])
           : undefined;
-        const detalle = faltantes?.length
-          ? `Faltan: ${faltantes.join(", ")}`
-          : undefined;
-        toast.error(
-          detalle
-            ? `Completa tu perfil. ${detalle}`
-            : "Completa tu perfil antes de reservar"
-        );
+        const detalle = faltantes?.length ? `Faltan: ${faltantes.join(", ")}` : undefined;
+        toast.error(detalle ? `Completa tu perfil. ${detalle}` : "Completa tu perfil antes de reservar");
         navigate("/perfil/completar", {
           replace: false,
           state: { from: { pathname: "/booking" }, faltantes },
@@ -223,9 +216,7 @@ export default function BookingPage() {
           <h2 className="card-title mb-4">Tus datos</h2>
           <div className="space-y-3">
             <div>
-              <label className="block text-sm text-zinc-400 mb-1">
-                Nombre *
-              </label>
+              <label className="block text-sm text-zinc-400 mb-1">Nombre *</label>
               <input
                 className="w-full rounded-xl border border-zinc-800 bg-neutral-900 px-3 py-2 outline-none focus:border-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
                 value={nombre}
@@ -236,15 +227,12 @@ export default function BookingPage() {
               />
               {!allowNombreOverride && sessionNombre && (
                 <p className="mt-1 text-xs text-zinc-500">
-                  Este dato proviene de tu perfil. Actualízalo en tu cuenta si
-                  necesitas cambiarlo.
+                  Este dato proviene de tu perfil. Actualízalo en tu cuenta si necesitas cambiarlo.
                 </p>
               )}
             </div>
             <div>
-              <label className="block text-sm text-zinc-400 mb-1">
-                Teléfono (E.164)
-              </label>
+              <label className="block text-sm text-zinc-400 mb-1">Teléfono (E.164)</label>
               <input
                 className="w-full rounded-xl border border-zinc-800 bg-neutral-900 px-3 py-2 outline-none focus:border-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed"
                 value={tel}

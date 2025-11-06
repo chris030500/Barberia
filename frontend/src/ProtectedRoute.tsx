@@ -27,7 +27,6 @@ export default function ProtectedRoute({ children, requireProfileComplete = fals
   const requiereDatosBasicos = requireProfileComplete && roles.includes("CLIENTE");
   const perfilCompleto = Boolean(user.nombre && user.nombre.trim()) && Boolean(user.telefonoE164 && String(user.telefonoE164).trim());
 
-  // Ejemplo: fuerza onboarding si le faltan datos
   if (requiereDatosBasicos && !perfilCompleto) {
     return <Navigate to="/perfil/completar" replace state={{ from: location }} />;
   }

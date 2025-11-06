@@ -70,6 +70,7 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+
       {
         path: "/perfil/completar",
         element: (
@@ -78,6 +79,7 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+
       // ✅ NUEVA PANTALLA DE DISPONIBILIDAD
       {
         path: "/disponibilidad",

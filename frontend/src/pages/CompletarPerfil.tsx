@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
-import { updateUsuarioMe } from "@/api/usuarios/service";
+import { updateUsuarioMe } from "@/api/usuarios/services";
 import type { UpdateMePayload } from "@/api/usuarios/types";
 import { useAuth } from "@/stores/auth";
 

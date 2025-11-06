@@ -5,11 +5,11 @@ import com.barber.backend.citas.dto.CitaSaveRequest;
 import com.barber.backend.citas.model.Cita.Estado;
 import com.barber.backend.citas.service.CitaService;
 import com.barber.backend.login.security.AppUserPrincipal;
-
 import jakarta.validation.Valid;
 import org.springframework.data.domain.*;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import com.barber.backend.login.security.AppUserPrincipal;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

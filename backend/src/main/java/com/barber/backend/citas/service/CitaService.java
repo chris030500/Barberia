@@ -9,18 +9,17 @@ import com.barber.backend.citas.model.Cita.Estado;
 import com.barber.backend.citas.repository.CitaRepository;
 import com.barber.backend.catalogo.model.Servicio;
 import com.barber.backend.catalogo.repository.ServicioRepository;
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
-import java.time.Instant;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
+import com.barber.backend.login.exception.PerfilIncompletoException;
 import com.barber.backend.login.model.Usuario;
 import com.barber.backend.login.repository.UsuarioRepository;
 import com.barber.backend.login.security.AppUserPrincipal;
-import org.springframework.util.StringUtils;
-import com.barber.backend.login.exception.PerfilIncompletoException;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
+import java.time.Instant;
 import java.util.LinkedHashSet;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 @Service
@@ -239,4 +238,80 @@ public class CitaService {
 
     private record ClienteData(String nombre, String telefono) {
     }
+
+    private void applyClienteData(
+            Cita cita,
+            CitaSaveRequest in,
+            AppUserPrincipal principal,
+            String currentNombre,
+            String currentTelefono) {
+        ClienteData data = resolveClienteData(in, principal, currentNombre, currentTelefono);
+        cita.setClienteNombre(data.nombre());
+        cita.setClienteTelE164(data.telefono());
+    }
+
+    private ClienteData resolveClienteData(
+            CitaSaveRequest in,
+            AppUserPrincipal principal,
+            String currentNombre,
+            String currentTelefono) {
+        Usuario usuario = resolveUsuario(principal);
+        String overrideNombre = StringUtils.hasText(in.clienteNombre()) ? in.clienteNombre().trim() : null;
+        String overrideTelefono = normalize(in.clienteTelE164());
+
+        String baseNombre = firstNonBlank(
+                overrideNombre,
+                normalize(currentNombre),
+                normalize(usuario.getNombre()),
+                normalize(usuario.getUsername()),
+                principal != null ? normalize(principal.getUsername()) : null);
+
+        String telefono = firstNonBlank(
+                overrideTelefono,
+                normalize(currentTelefono),
+                normalize(usuario.getTelefonoE164()));
+
+        boolean nombreValido = StringUtils.hasText(baseNombre);
+        boolean telefonoValido = StringUtils.hasText(telefono);
+
+        if (!nombreValido || !telefonoValido) {
+            LinkedHashSet<String> faltantes = new LinkedHashSet<>();
+            if (!nombreValido) {
+                faltantes.add("nombre");
+            }
+            if (!telefonoValido) {
+                faltantes.add("teléfono");
+            }
+            throw new PerfilIncompletoException(faltantes);
+        }
+
+        return new ClienteData(baseNombre, telefono);
+    }
+
+    private Usuario resolveUsuario(AppUserPrincipal principal) {
+        if (principal == null || principal.getUserId() == null) {
+            throw new IllegalStateException("Debes iniciar sesión para reservar");
+        }
+
+        return usuarioRepo.findById(principal.getUserId())
+                .orElseThrow(() -> new IllegalStateException("Usuario autenticado no encontrado"));
+    }
+
+    private String normalize(String value) {
+        return value != null ? value.trim() : null;
+    }
+
+    private String firstNonBlank(String... values) {
+        if (values == null) {
+            return null;
+        }
+        for (String value : values) {
+            if (StringUtils.hasText(value)) {
+                return value.trim();
+            }
+        }
+        return null;
+    }
+
+    private record ClienteData(String nombre, String telefono) {}
 }

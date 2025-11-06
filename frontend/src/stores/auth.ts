@@ -1,7 +1,6 @@
 // src/stores/auth.ts
 import { create } from 'zustand'
 import { getAuth, signOut } from 'firebase/auth'
-
 import type { Role } from '@/api/usuarios/types'
 
 export type User = {
