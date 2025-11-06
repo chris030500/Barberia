@@ -82,8 +82,7 @@ public class Usuario {
     Instant now = Instant.now();
     if (creadoEn == null) creadoEn = now;
     if (actualizadoEn == null) actualizadoEn = now;
-    // saneo mínimo para nombre/username si vienen nulos (evitar NOT NULL aguas si tu schema lo exige)
-    if (nombre == null || nombre.isBlank()) nombre = "Usuario";
+    // saneo mínimo para username si viene nulo (evitar NOT NULL aguas si tu schema lo exige)
     if (username == null || username.isBlank()) username = "user-" + now.getEpochSecond();
   }
 
