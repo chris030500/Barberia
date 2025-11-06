@@ -8,5 +8,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     Optional<Usuario> findByFirebaseUid(String firebaseUid);
 
     Optional<Usuario> findByTelefonoE164(String telefonoE164);
+
+    long countByRolAndActivoTrue(Usuario.Rol rol);
 }
 
