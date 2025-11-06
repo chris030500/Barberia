@@ -14,8 +14,16 @@ export type BloqueoCreateReq = {
   motivo?: string | null;
 };
 
-export async function listBloqueos(barberoId: number): Promise<Bloqueo[]> {
-  const { data } = await http.get<Bloqueo[]>(`/api/barberos/${barberoId}/bloqueos`);
+type BloqueoQuery = {
+  desde?: string;
+  hasta?: string;
+  fecha?: string;
+};
+
+export async function listBloqueos(barberoId: number, params?: BloqueoQuery): Promise<Bloqueo[]> {
+  const { data } = await http.get<Bloqueo[]>(`/api/barberos/${barberoId}/bloqueos`, {
+    params,
+  });
   return data;
 }
 
