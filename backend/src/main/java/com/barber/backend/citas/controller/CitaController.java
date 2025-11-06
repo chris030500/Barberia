@@ -4,11 +4,15 @@ import com.barber.backend.citas.dto.CitaDTO;
 import com.barber.backend.citas.dto.CitaSaveRequest;
 import com.barber.backend.citas.model.Cita.Estado;
 import com.barber.backend.citas.service.CitaService;
+import com.barber.backend.login.security.AppUserPrincipal;
+
 import jakarta.validation.Valid;
 import org.springframework.data.domain.*;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.barber.backend.login.security.AppUserPrincipal;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import java.time.Instant;
 
@@ -55,14 +59,18 @@ public class CitaController {
         return service.get(id);
     }
 
-    @PostMapping
-    public ResponseEntity<CitaDTO> create(@Valid @RequestBody CitaSaveRequest in) {
-        return ResponseEntity.ok(service.create(in));
+    public ResponseEntity<CitaDTO> create(
+            @Valid @RequestBody CitaSaveRequest in,
+            @AuthenticationPrincipal AppUserPrincipal principal) {
+        return ResponseEntity.ok(service.create(in, principal));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CitaDTO> update(@PathVariable Long id, @Valid @RequestBody CitaSaveRequest in) {
-        return ResponseEntity.ok(service.update(id, in));
+    public ResponseEntity<CitaDTO> update(
+            @PathVariable Long id,
+            @Valid @RequestBody CitaSaveRequest in,
+            @AuthenticationPrincipal AppUserPrincipal principal) {
+        return ResponseEntity.ok(service.update(id, in, principal));
     }
 
     @DeleteMapping("/{id}")
