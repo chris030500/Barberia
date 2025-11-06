@@ -67,7 +67,17 @@ class ClientePerfilResolver {
     }
 
     private String normalize(String value) {
-        return value != null ? value.trim() : null;
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        if (trimmed.isEmpty()) {
+            return null;
+        }
+        if ("usuario".equalsIgnoreCase(trimmed)) {
+            return null;
+        }
+        return trimmed;
     }
 
     private String firstNonBlank(String... values) {

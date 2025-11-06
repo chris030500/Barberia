@@ -31,7 +31,9 @@ export default function ProtectedRoute({ children, requireProfileComplete = fals
     const trimmed = valor.trim();
     if (!trimmed) return false;
     const normalized = trimmed.toLowerCase();
-    return normalized !== "null" && normalized !== "undefined";
+    if (normalized === "null" || normalized === "undefined") return false;
+    if (normalized === "usuario") return false;
+    return true;
   };
 
   const nombreValido = isDatoPresente(user.nombre);
