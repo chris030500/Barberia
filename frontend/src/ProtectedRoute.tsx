@@ -25,7 +25,11 @@ export default function ProtectedRoute({ children, requireProfileComplete = fals
 
   const roles = user.roles ?? [];
   const requiereDatosBasicos = requireProfileComplete && roles.includes("CLIENTE");
-  const perfilCompleto = Boolean(user.nombre && user.nombre.trim()) && Boolean(user.telefonoE164 && String(user.telefonoE164).trim());
+
+  const nombreValido = typeof user.nombre === "string" && user.nombre.trim().length > 0;
+  const telefonoValido =
+    typeof user.telefonoE164 === "string" && user.telefonoE164.trim().length > 0;
+  const perfilCompleto = nombreValido && telefonoValido;
 
   if (requiereDatosBasicos && !perfilCompleto) {
     return <Navigate to="/perfil/completar" replace state={{ from: location }} />;
