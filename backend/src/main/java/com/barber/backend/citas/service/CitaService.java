@@ -13,9 +13,11 @@ import com.barber.backend.login.security.AppUserPrincipal;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
+import java.util.LinkedHashSet;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 @Service
 public class CitaService {
@@ -76,7 +78,8 @@ public class CitaService {
         int durMin = (in.overrideDuracionMin() != null && in.overrideDuracionMin() > 0)
                 ? in.overrideDuracionMin()
                 : (servicio.getDuracionMin() != null ? servicio.getDuracionMin() : 0);
-        if (durMin <= 0) durMin = 1;
+        if (durMin <= 0)
+            durMin = 1;
         Instant fin = in.inicio().plusSeconds(durMin * 60L);
 
         long overlaps = repo.countOverlaps(barbero.getId(), in.inicio(), fin);
@@ -113,7 +116,8 @@ public class CitaService {
         int durMin = (in.overrideDuracionMin() != null && in.overrideDuracionMin() > 0)
                 ? in.overrideDuracionMin()
                 : (servicio.getDuracionMin() != null ? servicio.getDuracionMin() : 0);
-        if (durMin <= 0) durMin = 1;
+        if (durMin <= 0)
+            durMin = 1;
         Instant fin = in.inicio().plusSeconds(durMin * 60L);
 
         // Usar query que excluye la misma cita
@@ -158,8 +162,7 @@ public class CitaService {
                 c.getOverridePrecioCentavos(),
                 c.getNotas(),
                 c.getCreadoEn(),
-                c.getActualizadoEn()
-        );
+                c.getActualizadoEn());
     }
 
 }
