@@ -29,4 +29,9 @@ public interface BarberoBloqueoRepository extends JpaRepository<BarberoBloqueo, 
   long countByBarbero_IdAndIdNotAndFinGreaterThanAndInicioLessThan(
       Long barberoId, Long excludeId, Instant desde, Instant hasta
   );
+
+  List<BarberoBloqueo> findTop5ByBarbero_IdAndFinAfterOrderByInicioAsc(
+      Long barberoId,
+      Instant fin
+  );
 }
