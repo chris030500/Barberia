@@ -8,6 +8,12 @@ public record BarberoDisponibilidadBarberoDTO(
     String telefonoE164,
     String descripcion,
     String avatarUrl,
+    String emailProfesional,
+    String instagramHandle,
+    String portafolioUrl,
+    String slogan,
+    Integer experienciaAnos,
+    List<String> especialidades,
     Boolean activo,
     List<BarberoServicioResumenDTO> servicios
 ) {}

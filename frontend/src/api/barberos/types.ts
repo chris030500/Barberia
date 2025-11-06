@@ -4,6 +4,12 @@ export type BarberoDTO = {
   telefonoE164?: string | null;
   descripcion?: string | null;
   avatarUrl?: string | null;
+  emailProfesional?: string | null;
+  instagramHandle?: string | null;
+  portafolioUrl?: string | null;
+  slogan?: string | null;
+  experienciaAnos?: number | null;
+  especialidades: string[];
   activo: boolean;
   creadoEn: string;
   actualizadoEn?: string | null;
@@ -15,6 +21,12 @@ export type BarberoSave = {
   telefonoE164?: string | null;
   descripcion?: string | null;
   avatarUrl?: string | null;
+  emailProfesional?: string | null;
+  instagramHandle?: string | null;
+  portafolioUrl?: string | null;
+  slogan?: string | null;
+  experienciaAnos?: number | null;
+  especialidades?: string[];
   activo?: boolean;
   servicios?: number[];
 };
@@ -40,6 +52,12 @@ export type BarberoDisponibilidadBarbero = {
   telefonoE164?: string | null;
   descripcion?: string | null;
   avatarUrl?: string | null;
+  emailProfesional?: string | null;
+  instagramHandle?: string | null;
+  portafolioUrl?: string | null;
+  slogan?: string | null;
+  experienciaAnos?: number | null;
+  especialidades: string[];
   activo: boolean;
   servicios: BarberoServicioResumen[];
 };

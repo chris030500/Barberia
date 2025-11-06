@@ -71,12 +71,22 @@ public class BarberoDisponibilidadFacade {
         .map(this::toCitaDTO)
         .collect(Collectors.toList());
 
+    List<String> especialidades = barbero.getEspecialidades() == null
+        ? List.of()
+        : barbero.getEspecialidades().stream().toList();
+
     BarberoDisponibilidadBarberoDTO barberoDTO = new BarberoDisponibilidadBarberoDTO(
         barbero.getId(),
         barbero.getNombre(),
         barbero.getTelefonoE164(),
         barbero.getDescripcion(),
         barbero.getAvatarUrl(),
+        barbero.getEmailProfesional(),
+        barbero.getInstagramHandle(),
+        barbero.getPortafolioUrl(),
+        barbero.getSlogan(),
+        barbero.getExperienciaAnos(),
+        especialidades,
         barbero.getActivo(),
         barbero.getServicios().stream()
             .sorted(Comparator.comparing(Servicio::getNombre, Comparator.nullsLast(String::compareToIgnoreCase)))

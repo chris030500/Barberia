@@ -14,7 +14,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional; // 👈
 
 import java.time.Instant;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class BarberoService {
@@ -64,15 +66,37 @@ public class BarberoService {
 
   private void apply(Barbero b, BarberoSaveRequest in) {
     b.setNombre(in.nombre());
-    b.setTelefonoE164(in.telefonoE164());
-    b.setDescripcion(in.descripcion());
-    b.setAvatarUrl(in.avatarUrl());
+    b.setTelefonoE164(normalize(in.telefonoE164()));
+    b.setDescripcion(normalize(in.descripcion()));
+    b.setAvatarUrl(normalize(in.avatarUrl()));
+    b.setEmailProfesional(normalize(in.emailProfesional()));
+    b.setInstagramHandle(normalizeHandle(in.instagramHandle()));
+    b.setPortafolioUrl(normalize(in.portafolioUrl()));
+    b.setSlogan(normalize(in.slogan()));
+    b.setExperienciaAnos(in.experienciaAnos());
     b.setActivo(in.activo() == null ? Boolean.TRUE : in.activo());
 
     b.getServicios().clear();
     if (in.servicios() != null && !in.servicios().isEmpty()) {
       List<Servicio> servicios = servicioRepo.findAllById(in.servicios());
       b.getServicios().addAll(servicios);
+    }
+
+    Set<String> targetEspecialidades = b.getEspecialidades();
+    if (targetEspecialidades == null) {
+      targetEspecialidades = new LinkedHashSet<>();
+      b.setEspecialidades(targetEspecialidades);
+    } else {
+      targetEspecialidades.clear();
+    }
+    if (in.especialidades() != null && !in.especialidades().isEmpty()) {
+      Set<String> especialidades = new LinkedHashSet<>();
+      in.especialidades().stream()
+          .map(this::normalize)
+          .filter(s -> s != null && !s.isBlank())
+          .limit(8)
+          .forEach(especialidades::add);
+      targetEspecialidades.addAll(especialidades);
     }
   }
 
@@ -81,9 +105,40 @@ public class BarberoService {
     var ids = (servicios == null ? List.<Servicio>of() : servicios)
         .stream().map(Servicio::getId).toList();
 
+    List<String> especialidades = b.getEspecialidades() == null
+        ? List.of()
+        : b.getEspecialidades().stream().toList();
+
     return new BarberoDTO(
-        b.getId(), b.getNombre(), b.getTelefonoE164(), b.getDescripcion(), b.getAvatarUrl(),
-        b.getActivo(), b.getCreadoEn(), b.getActualizadoEn(), ids
+        b.getId(),
+        b.getNombre(),
+        b.getTelefonoE164(),
+        b.getDescripcion(),
+        b.getAvatarUrl(),
+        b.getEmailProfesional(),
+        b.getInstagramHandle(),
+        b.getPortafolioUrl(),
+        b.getSlogan(),
+        b.getExperienciaAnos(),
+        especialidades,
+        b.getActivo(),
+        b.getCreadoEn(),
+        b.getActualizadoEn(),
+        ids
     );
+  }
+
+  private String normalize(String value) {
+    if (value == null) return null;
+    String trimmed = value.trim();
+    return trimmed.isEmpty() ? null : trimmed;
+  }
+
+  private String normalizeHandle(String value) {
+    String normalized = normalize(value);
+    if (normalized == null) {
+      return null;
+    }
+    return normalized.startsWith("@") ? normalized.substring(1) : normalized;
   }
 }

@@ -5,6 +5,9 @@ import {
   CalendarCheck,
   CalendarDays,
   Clock4,
+  Instagram,
+  Link2,
+  Mail,
   Phone,
   RefreshCw,
   Scissors,
@@ -141,14 +144,49 @@ export default function BarberoDisponibilidadPage() {
               <p className="mt-2 max-w-2xl text-sm text-zinc-300">
                 Gestiona horarios, bloqueos y disponibilidad semanal con una vista moderna y simplificada.
               </p>
+              {resumen?.barbero.slogan ? (
+                <p className="mt-2 max-w-2xl text-sm italic text-emerald-100">“{resumen.barbero.slogan}”</p>
+              ) : null}
               {resumen?.barbero.descripcion ? (
                 <p className="mt-2 max-w-2xl text-xs text-zinc-400">{resumen.barbero.descripcion}</p>
+              ) : null}
+              {resumen?.barbero.especialidades?.length ? (
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  {resumen.barbero.especialidades.map((tag) => (
+                    <span
+                      key={tag}
+                      className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/15 px-3 py-1 text-[11px] text-emerald-100"
+                    >
+                      <Sparkles className="h-3 w-3" /> {tag}
+                    </span>
+                  ))}
+                </div>
               ) : null}
               <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-zinc-300">
                 {resumen?.barbero.telefonoE164 ? (
                   <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-sm text-white">
                     <Phone className="h-4 w-4" /> {resumen.barbero.telefonoE164}
                   </span>
+                ) : null}
+                {resumen?.barbero.emailProfesional ? (
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-sm text-white">
+                    <Mail className="h-4 w-4" /> {resumen.barbero.emailProfesional}
+                  </span>
+                ) : null}
+                {resumen?.barbero.instagramHandle ? (
+                  <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-sm text-white">
+                    <Instagram className="h-4 w-4" /> @{resumen.barbero.instagramHandle}
+                  </span>
+                ) : null}
+                {resumen?.barbero.portafolioUrl ? (
+                  <a
+                    href={resumen.barbero.portafolioUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 rounded-full border border-emerald-400/40 bg-emerald-500/15 px-4 py-1.5 text-sm text-emerald-100 hover:bg-emerald-500/25"
+                  >
+                    <Link2 className="h-4 w-4" /> Portafolio
+                  </a>
                 ) : null}
                 {servicioLabels.map((label) => (
                   <span
