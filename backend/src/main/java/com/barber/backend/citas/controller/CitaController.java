@@ -11,6 +11,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import com.barber.backend.login.security.AppUserPrincipal;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import java.time.Instant;
 
