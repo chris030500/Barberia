@@ -17,7 +17,7 @@ export type CitaDTO = {
 export type CitaSaveReq = {
   barberoId: number;
   servicioId: number;
-  clienteNombre: string;
+  clienteNombre?: string;
   clienteTelE164?: string | null;
   inicio: string;
   overrideDuracionMin?: number | null;

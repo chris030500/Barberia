@@ -81,7 +81,9 @@ public class FirebaseAuthController {
     u.setFirebaseUid(uid);
     u.setEmail(nullIfBlank(email));
     u.setNombre(nullIfBlank(name));
-    if (isBlank(u.getNombre()))   u.setNombre("Usuario");
+    if (isPlaceholderNombre(u.getNombre())) {
+      u.setNombre(null);
+    }
     if (u.getApellido() == null)  u.setApellido(""); // evita NOT NULL si tu esquema lo requiere
 
     if (isBlank(u.getUsername())) {
@@ -92,8 +94,20 @@ public class FirebaseAuthController {
     u.setProveedorId(uid);
 
     if (!isBlank(phone)) {
-      u.setTelefonoE164(phone);
-      u.setTelefonoVerificado(true);
+      String trimmedPhone = phone.trim();
+      Long currentUserId = u.getId();
+      boolean telefonoDisponible = usuarioRepo.findByTelefonoE164(trimmedPhone)
+          .map(existing -> Objects.equals(existing.getId(), currentUserId))
+          .orElse(true);
+      if (telefonoDisponible) {
+        u.setTelefonoE164(trimmedPhone);
+        u.setTelefonoVerificado(true);
+      } else {
+        log.warn(
+            "No se asignó teléfono {} al usuario {} porque ya pertenece a otra cuenta",
+            trimmedPhone,
+            u.getId());
+      }
     }
 
     u.setActualizadoEn(Instant.now());
@@ -120,7 +134,7 @@ public class FirebaseAuthController {
     // 6) DTO para el frontend (roles sin prefijo)
     UsuarioMeDTO dto = new UsuarioMeDTO(
         u.getId(),
-        defaultIfBlank(u.getNombre(), ""),
+        nombreOrEmpty(u.getNombre()),
         defaultIfBlank(u.getApellido(), ""),
         nullIfBlank(u.getEmail()),
         defaultIfBlank(u.getUsername(), ""),
@@ -205,6 +219,17 @@ public class FirebaseAuthController {
 
   private static boolean isBlank(String s) { return s == null || s.isBlank(); }
   private static String nullIfBlank(String s) { return isBlank(s) ? null : s; }
+  private static boolean isPlaceholderNombre(String s) {
+    return s != null && s.trim().equalsIgnoreCase("usuario");
+  }
+
+  private static String nombreOrEmpty(String nombre) {
+    if (nombre == null) return "";
+    String trimmed = nombre.trim();
+    if (trimmed.isEmpty()) return "";
+    return isPlaceholderNombre(trimmed) ? "" : trimmed;
+  }
+
   private static String defaultIfBlank(String s, String def) { return isBlank(s) ? def : s; }
   private static String safeStr(Object o) { return o == null ? null : String.valueOf(o); }
 
