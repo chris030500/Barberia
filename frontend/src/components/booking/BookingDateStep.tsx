@@ -8,6 +8,7 @@ type Props = {
   fecha: string; // YYYY-MM-DD
   onFechaChange: (yyyyMMdd: string) => void;
   onPickSlot: (hhmm: string) => void;
+  selectedSlot?: string | null;
 };
 
 type SlotDTO = { inicio: string; fin: string }; // ISO strings desde el backend
@@ -25,6 +26,7 @@ export default function BookingDateStep({
   fecha,
   onFechaChange,
   onPickSlot,
+  selectedSlot,
 }: Props) {
   const [loading, setLoading] = useState(false);
   const [slots, setSlots] = useState<string[]>([]);
@@ -79,7 +81,12 @@ export default function BookingDateStep({
                 key={hhmm}
                 type="button"
                 onClick={() => onPickSlot(hhmm)}
-                className="rounded-full border border-emerald-700/60 bg-emerald-900/20 hover:bg-emerald-900/40 px-3 py-1.5 text-sm"
+                aria-pressed={selectedSlot === hhmm}
+                className={
+                  selectedSlot === hhmm
+                    ? "rounded-full border border-emerald-400 bg-emerald-500/20 px-3 py-1.5 text-sm text-emerald-200"
+                    : "rounded-full border border-emerald-700/60 bg-emerald-900/20 px-3 py-1.5 text-sm text-emerald-100 hover:border-emerald-400/80 hover:bg-emerald-900/40"
+                }
               >
                 {hhmm}
               </button>

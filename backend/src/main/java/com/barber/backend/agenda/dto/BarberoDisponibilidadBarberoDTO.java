@@ -1,9 +1,8 @@
-package com.barber.backend.barberos.dto;
+package com.barber.backend.agenda.dto;
 
-import java.time.Instant;
 import java.util.List;
 
-public record BarberoDTO(
+public record BarberoDisponibilidadBarberoDTO(
     Long id,
     String nombre,
     String telefonoE164,
@@ -16,7 +15,5 @@ public record BarberoDTO(
     Integer experienciaAnos,
     List<String> especialidades,
     Boolean activo,
-    Instant creadoEn,
-    Instant actualizadoEn,
-    List<Long> servicios // IDs de servicios asociados
+    List<BarberoServicioResumenDTO> servicios
 ) {}

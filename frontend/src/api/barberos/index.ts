@@ -1,5 +1,10 @@
 import { http } from "@/api/http";
-import type { BarberoDTO, BarberoSave, Page } from "./types";
+import type {
+  BarberoDTO,
+  BarberoDisponibilidadResumen,
+  BarberoSave,
+  Page,
+} from "./types";
 
 export async function listBarberos(params: { page?: number; size?: number; soloActivos?: boolean }) {
   const { page = 0, size = 10, soloActivos } = params ?? {};
@@ -35,4 +40,11 @@ export async function listBarberosLite() {
     "/api/barberos?page=0&size=1000&soloActivos=true&sort=nombre,asc"
   );
   return res.data.content;
+}
+
+export async function getBarberoDisponibilidadResumen(barberoId: number) {
+  const res = await http.get<BarberoDisponibilidadResumen>(
+    `/api/barberos/${barberoId}/disponibilidad/resumen`
+  );
+  return res.data;
 }
