@@ -78,7 +78,8 @@ public class CitaService {
         int durMin = (in.overrideDuracionMin() != null && in.overrideDuracionMin() > 0)
                 ? in.overrideDuracionMin()
                 : (servicio.getDuracionMin() != null ? servicio.getDuracionMin() : 0);
-        if (durMin <= 0) durMin = 1;
+        if (durMin <= 0)
+            durMin = 1;
         Instant fin = in.inicio().plusSeconds(durMin * 60L);
 
         long overlaps = repo.countOverlaps(barbero.getId(), in.inicio(), fin);
@@ -112,7 +113,8 @@ public class CitaService {
         int durMin = (in.overrideDuracionMin() != null && in.overrideDuracionMin() > 0)
                 ? in.overrideDuracionMin()
                 : (servicio.getDuracionMin() != null ? servicio.getDuracionMin() : 0);
-        if (durMin <= 0) durMin = 1;
+        if (durMin <= 0)
+            durMin = 1;
         Instant fin = in.inicio().plusSeconds(durMin * 60L);
 
         // Usar query que excluye la misma cita
@@ -157,8 +159,84 @@ public class CitaService {
                 c.getOverridePrecioCentavos(),
                 c.getNotas(),
                 c.getCreadoEn(),
-                c.getActualizadoEn()
-        );
+                c.getActualizadoEn());
+    }
+
+    private void applyClienteData(
+            Cita cita,
+            CitaSaveRequest in,
+            AppUserPrincipal principal,
+            String currentNombre,
+            String currentTelefono) {
+        ClienteData data = resolveClienteData(in, principal, currentNombre, currentTelefono);
+        cita.setClienteNombre(data.nombre());
+        cita.setClienteTelE164(data.telefono());
+    }
+
+    private ClienteData resolveClienteData(
+            CitaSaveRequest in,
+            AppUserPrincipal principal,
+            String currentNombre,
+            String currentTelefono) {
+        Usuario usuario = resolveUsuario(principal);
+        String overrideNombre = StringUtils.hasText(in.clienteNombre()) ? in.clienteNombre().trim() : null;
+        String overrideTelefono = normalize(in.clienteTelE164());
+
+        String baseNombre = firstNonBlank(
+                overrideNombre,
+                normalize(usuario.getNombre()),
+                normalize(usuario.getUsername()),
+                principal != null ? normalize(principal.getUsername()) : null,
+                normalize(currentNombre));
+
+        String telefono = firstNonBlank(
+                overrideTelefono,
+                normalize(usuario.getTelefonoE164()),
+                normalize(currentTelefono));
+
+        boolean nombreValido = StringUtils.hasText(baseNombre);
+        boolean telefonoValido = StringUtils.hasText(telefono);
+
+        if (!nombreValido || !telefonoValido) {
+            LinkedHashSet<String> faltantes = new LinkedHashSet<>();
+            if (!nombreValido) {
+                faltantes.add("nombre");
+            }
+            if (!telefonoValido) {
+                faltantes.add("teléfono");
+            }
+            throw new PerfilIncompletoException(faltantes);
+        }
+
+        return new ClienteData(baseNombre, telefono);
+    }
+
+    private Usuario resolveUsuario(AppUserPrincipal principal) {
+        if (principal == null || principal.getUserId() == null) {
+            throw new IllegalStateException("Debes iniciar sesión para reservar");
+        }
+
+        return usuarioRepo.findById(principal.getUserId())
+                .orElseThrow(() -> new IllegalStateException("Usuario autenticado no encontrado"));
+    }
+
+    private String normalize(String value) {
+        return value != null ? value.trim() : null;
+    }
+
+    private String firstNonBlank(String... values) {
+        if (values == null) {
+            return null;
+        }
+        for (String value : values) {
+            if (StringUtils.hasText(value)) {
+                return value.trim();
+            }
+        }
+        return null;
+    }
+
+    private record ClienteData(String nombre, String telefono) {
     }
 
     private void applyClienteData(
