@@ -3,11 +3,15 @@ package com.barber.backend.login.service;
 
 import com.barber.backend.login.model.Usuario;
 import com.barber.backend.login.repository.UsuarioRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class UsuarioSocialService {
+  private static final Logger log = LoggerFactory.getLogger(UsuarioSocialService.class);
+
   private final UsuarioRepository repo;
 
   public UsuarioSocialService(UsuarioRepository repo) {
@@ -43,8 +47,16 @@ public class UsuarioSocialService {
           }
           if (avatarUrl != null && !avatarUrl.isBlank()) u.setAvatarUrl(avatarUrl);
           if (phoneE164 != null && !phoneE164.isBlank()) {
-            u.setTelefonoE164(phoneE164);
-            u.setTelefonoVerificado(true);
+            String tel = phoneE164.trim();
+            if (canAssignPhone(tel, u.getId())) {
+              u.setTelefonoE164(tel);
+              u.setTelefonoVerificado(true);
+            } else {
+              log.warn(
+                  "No se asignó teléfono {} al usuario {} porque ya pertenece a otra cuenta",
+                  tel,
+                  u.getId());
+            }
           }
           u.setProveedor(mapProvider(firebaseProvider));
           u.setProveedorId(uid);
@@ -66,8 +78,15 @@ public class UsuarioSocialService {
           nuevo.setApellido("N/A"); // <- evita NOT NULL
           nuevo.setAvatarUrl(avatarUrl);
           if (phoneE164 != null && !phoneE164.isBlank()) {
-            nuevo.setTelefonoE164(phoneE164);
-            nuevo.setTelefonoVerificado(true);
+            String tel = phoneE164.trim();
+            if (canAssignPhone(tel, null)) {
+              nuevo.setTelefonoE164(tel);
+              nuevo.setTelefonoVerificado(true);
+            } else {
+              log.warn(
+                  "No se guardó el teléfono {} para el nuevo usuario con uid {} porque ya existe", tel, uid);
+              nuevo.setTelefonoVerificado(false);
+            }
           } else {
             nuevo.setTelefonoVerificado(false);
           }
@@ -91,5 +110,11 @@ public class UsuarioSocialService {
 
   private static boolean isPlaceholderNombre(String nombre) {
     return nombre != null && nombre.trim().equalsIgnoreCase("usuario");
+  }
+
+  private boolean canAssignPhone(String telefono, Long usuarioId) {
+    return repo.findByTelefonoE164(telefono)
+        .map(existing -> usuarioId != null && existing.getId().equals(usuarioId))
+        .orElse(true);
   }
 }
