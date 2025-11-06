@@ -7,6 +7,7 @@ import ServiciosPage from "@/pages/Servicios";
 import BarberosPage from "./pages/Barberos";
 import CitasPage from "./pages/Citas";
 import BookingPage from "./pages/Booking";
+import CompletarPerfilPage from "./pages/CompletarPerfil";
 import BarberoDisponibilidadPage from "./pages/BarberoDisponibilidadPage";
 import { RequireRole } from "./RequiereRole";
 
@@ -62,14 +63,21 @@ export const router = createBrowserRouter([
       {
         path: "/booking",
         element: (
-          <ProtectedRoute>
+          <ProtectedRoute requireProfileComplete>
             <RequireRole roles={["CLIENTE", "ADMIN"]}>
               <BookingPage />
             </RequireRole>
           </ProtectedRoute>
         ),
       },
-
+      {
+        path: "/perfil/completar",
+        element: (
+          <ProtectedRoute>
+            <CompletarPerfilPage />
+          </ProtectedRoute>
+        ),
+      },
       // ✅ NUEVA PANTALLA DE DISPONIBILIDAD
       {
         path: "/disponibilidad",

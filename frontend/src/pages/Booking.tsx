@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { listServicios, type ServicioDTO } from "@/api/servicios/services";
 import { listBarberosLite, type BarberoLite } from "@/api/barberos";
 import BookingDateStep from "@/components/booking/BookingDateStep";
@@ -19,9 +20,9 @@ export default function BookingPage() {
   const [hhmm, setHhmm] = useState<string>("");
 
   const user = useAuth((s) => s.user);
+  const navigate = useNavigate();
   const roles = user?.roles ?? [];
-  const puedeEditarDatosCliente =
-    roles.includes("ADMIN") || roles.includes("BARBERO");
+  const puedeEditarDatosCliente = roles.includes("ADMIN") || roles.includes("BARBERO");
   const sessionNombre = (user?.nombre ?? "").trim();
   const sessionTel = (user?.telefonoE164 ?? "").trim();
 
@@ -86,6 +87,7 @@ export default function BookingPage() {
   const reservar = async () => {
     if (submitting) return;
     try {
+      if (!user) return toast.error("Debes iniciar sesión para reservar");
       if (!servicioId) return toast.error("Selecciona un servicio");
       if (!barberoId) return toast.error("Selecciona un barbero");
       if (!fecha || !hhmm) return toast.error("Selecciona un horario");
@@ -117,13 +119,33 @@ export default function BookingPage() {
       }
 
       setSubmitting(true);
-      const res = await createCita(body);
-      const saved = (res as any).data ?? res;
+      await createCita(body);
       toast.success("Cita reservada");
       // redirige o muestra confirmación
+      setHhmm("");
+      setFecha(new Date().toISOString().slice(0, 10));
     } catch (e: any) {
+      const status = e?.response?.status;
       const msg =
         e?.response?.data?.message ?? e?.message ?? "No se pudo reservar";
+      if (status === 412) {
+        const faltantes = Array.isArray(e?.response?.data?.camposFaltantes)
+          ? (e.response.data.camposFaltantes as string[])
+          : undefined;
+        const detalle = faltantes?.length
+          ? `Faltan: ${faltantes.join(", ")}`
+          : undefined;
+        toast.error(
+          detalle
+            ? `Completa tu perfil. ${detalle}`
+            : "Completa tu perfil antes de reservar"
+        );
+        navigate("/perfil/completar", {
+          replace: false,
+          state: { from: { pathname: "/booking" }, faltantes },
+        });
+        return;
+      }
       if (String(msg).toLowerCase().includes("empalm")) {
         toast.error("Ese horario se empalmó, intenta otro");
       } else {

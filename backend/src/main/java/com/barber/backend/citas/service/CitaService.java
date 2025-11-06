@@ -19,6 +19,9 @@ import com.barber.backend.login.model.Usuario;
 import com.barber.backend.login.repository.UsuarioRepository;
 import com.barber.backend.login.security.AppUserPrincipal;
 import org.springframework.util.StringUtils;
+import com.barber.backend.login.exception.PerfilIncompletoException;
+import java.util.LinkedHashSet;
+import org.springframework.util.StringUtils;
 
 @Service
 public class CitaService {
@@ -76,7 +79,8 @@ public class CitaService {
         int durMin = (in.overrideDuracionMin() != null && in.overrideDuracionMin() > 0)
                 ? in.overrideDuracionMin()
                 : (servicio.getDuracionMin() != null ? servicio.getDuracionMin() : 0);
-        if (durMin <= 0) durMin = 1;
+        if (durMin <= 0)
+            durMin = 1;
         Instant fin = in.inicio().plusSeconds(durMin * 60L);
 
         long overlaps = repo.countOverlaps(barbero.getId(), in.inicio(), fin);
@@ -110,7 +114,8 @@ public class CitaService {
         int durMin = (in.overrideDuracionMin() != null && in.overrideDuracionMin() > 0)
                 ? in.overrideDuracionMin()
                 : (servicio.getDuracionMin() != null ? servicio.getDuracionMin() : 0);
-        if (durMin <= 0) durMin = 1;
+        if (durMin <= 0)
+            durMin = 1;
         Instant fin = in.inicio().plusSeconds(durMin * 60L);
 
         // Usar query que excluye la misma cita
@@ -155,8 +160,7 @@ public class CitaService {
                 c.getOverridePrecioCentavos(),
                 c.getNotas(),
                 c.getCreadoEn(),
-                c.getActualizadoEn()
-        );
+                c.getActualizadoEn());
     }
 
     private void applyClienteData(
@@ -175,58 +179,64 @@ public class CitaService {
             AppUserPrincipal principal,
             String currentNombre,
             String currentTelefono) {
-        if (StringUtils.hasText(in.clienteNombre())) {
-            return new ClienteData(in.clienteNombre().trim(), normalizeTelefono(in.clienteTelE164()));
-        }
+        Usuario usuario = resolveUsuario(principal);
+        String overrideNombre = StringUtils.hasText(in.clienteNombre()) ? in.clienteNombre().trim() : null;
+        String overrideTelefono = normalize(in.clienteTelE164());
 
-        if (principal != null) {
-            if (principal.getUserId() != null) {
-                return usuarioRepo.findById(principal.getUserId())
-                        .map(usuario -> new ClienteData(
-                                deriveNombre(usuario, principal),
-                                preferNonBlank(
-                                        normalizeTelefono(usuario.getTelefonoE164()),
-                                        preferNonBlank(normalizeTelefono(in.clienteTelE164()), normalizeTelefono(currentTelefono)))))
-                        .orElseGet(() -> new ClienteData(
-                                defaultNombreFromPrincipal(principal),
-                                preferNonBlank(normalizeTelefono(in.clienteTelE164()), normalizeTelefono(currentTelefono))));
+        String baseNombre = firstNonBlank(
+                overrideNombre,
+                normalize(usuario.getNombre()),
+                normalize(usuario.getUsername()),
+                principal != null ? normalize(principal.getUsername()) : null,
+                normalize(currentNombre));
+
+        String telefono = firstNonBlank(
+                overrideTelefono,
+                normalize(usuario.getTelefonoE164()),
+                normalize(currentTelefono));
+
+        boolean nombreValido = StringUtils.hasText(baseNombre);
+        boolean telefonoValido = StringUtils.hasText(telefono);
+
+        if (!nombreValido || !telefonoValido) {
+            LinkedHashSet<String> faltantes = new LinkedHashSet<>();
+            if (!nombreValido) {
+                faltantes.add("nombre");
             }
-            return new ClienteData(
-                    defaultNombreFromPrincipal(principal),
-                    preferNonBlank(normalizeTelefono(in.clienteTelE164()), normalizeTelefono(currentTelefono)));
+            if (!telefonoValido) {
+                faltantes.add("teléfono");
+            }
+            throw new PerfilIncompletoException(faltantes);
         }
 
-        if (StringUtils.hasText(currentNombre)) {
-            return new ClienteData(currentNombre.trim(), preferNonBlank(normalizeTelefono(in.clienteTelE164()), normalizeTelefono(currentTelefono)));
+        return new ClienteData(baseNombre, telefono);
+    }
+
+    private Usuario resolveUsuario(AppUserPrincipal principal) {
+        if (principal == null || principal.getUserId() == null) {
+            throw new IllegalStateException("Debes iniciar sesión para reservar");
         }
 
-        throw new IllegalArgumentException("No se pudo determinar el nombre del cliente");
+        return usuarioRepo.findById(principal.getUserId())
+                .orElseThrow(() -> new IllegalStateException("Usuario autenticado no encontrado"));
     }
 
-    private String deriveNombre(Usuario usuario, AppUserPrincipal principal) {
-        if (StringUtils.hasText(usuario.getNombre())) {
-            return usuario.getNombre().trim();
+    private String normalize(String value) {
+        return value != null ? value.trim() : null;
+    }
+
+    private String firstNonBlank(String... values) {
+        if (values == null) {
+            return null;
         }
-        if (StringUtils.hasText(usuario.getUsername())) {
-            return usuario.getUsername().trim();
+        for (String value : values) {
+            if (StringUtils.hasText(value)) {
+                return value.trim();
+            }
         }
-        return defaultNombreFromPrincipal(principal);
+        return null;
     }
 
-    private String defaultNombreFromPrincipal(AppUserPrincipal principal) {
-        if (principal != null && StringUtils.hasText(principal.getUsername())) {
-            return principal.getUsername().trim();
-        }
-        return "Cliente";
+    private record ClienteData(String nombre, String telefono) {
     }
-
-    private String normalizeTelefono(String telefono) {
-        return telefono != null ? telefono.trim() : null;
-    }
-
-    private String preferNonBlank(String primary, String fallback) {
-        return StringUtils.hasText(primary) ? primary : fallback;
-    }
-
-    private record ClienteData(String nombre, String telefono) {}
 }

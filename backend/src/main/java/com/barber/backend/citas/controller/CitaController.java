@@ -59,6 +59,7 @@ public class CitaController {
         return service.get(id);
     }
 
+    @PostMapping
     public ResponseEntity<CitaDTO> create(
             @Valid @RequestBody CitaSaveRequest in,
             @AuthenticationPrincipal AppUserPrincipal principal) {
