@@ -2,7 +2,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import { updateUsuarioMe } from "@/api/usuarios/services";
-import type { UpdateMePayload } from "@/api/usuarios/types";
+import type { Role, UpdateMePayload } from "@/api/usuarios/types";
 import { useAuth } from "@/stores/auth";
 
 const TELEFONO_REGEXP = /^\+[1-9]\d{6,14}$/;
@@ -55,11 +55,18 @@ export default function CompletarPerfilPage() {
         telefonoE164: telTrim,
       };
       const updated = await updateUsuarioMe(payload);
+      const normalizeRoles = (roles: unknown): Role[] => {
+        if (!Array.isArray(roles)) return [];
+        return roles.filter((rol): rol is Role =>
+          rol === "ADMIN" || rol === "BARBERO" || rol === "CLIENTE"
+        );
+      };
+      const roles = normalizeRoles(updated.roles ?? user?.roles);
       if (user) {
         setUser({
           ...user,
           ...updated,
-          roles: updated.roles ?? user.roles ?? [],
+          roles,
         });
       }
       toast.success("Perfil actualizado correctamente");
