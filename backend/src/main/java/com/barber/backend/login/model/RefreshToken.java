@@ -4,7 +4,11 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity @Table(name = "refresh_tokens",
-  indexes = { @Index(columnList = "usuario_id"), @Index(columnList = "token_hash") }
+  indexes = {
+      @Index(columnList = "usuario_id"),
+      @Index(columnList = "token_hash"),
+      @Index(columnList = "jti", unique = true)
+  }
 )
 public class RefreshToken {
   @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -12,6 +16,9 @@ public class RefreshToken {
 
   @Column(name="usuario_id", nullable=false)
   private Long usuarioId;
+
+  @Column(name="jti", nullable=false, length = 40)
+  private String jti;
 
   @Column(name="token_hash", nullable=false, length=100)
   private String tokenHash;
@@ -33,6 +40,8 @@ public class RefreshToken {
   public void setId(Long id) { this.id = id; }
   public Long getUsuarioId() { return usuarioId; }
   public void setUsuarioId(Long usuarioId) { this.usuarioId = usuarioId; }
+  public String getJti() { return jti; }
+  public void setJti(String jti) { this.jti = jti; }
   public String getTokenHash() { return tokenHash; }
   public void setTokenHash(String tokenHash) { this.tokenHash = tokenHash; }
   public LocalDateTime getExpiraEn() { return expiraEn; }
