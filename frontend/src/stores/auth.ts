@@ -1,8 +1,7 @@
 // src/stores/auth.ts
 import { create } from 'zustand'
 import { getAuth, signOut } from 'firebase/auth'
-
-export type Role = 'ADMIN' | 'BARBERO' | 'CLIENTE'
+import type { Role } from '@/api/usuarios/types'
 
 export type User = {
   id: number
@@ -28,6 +27,7 @@ type AuthState = {
   loading: boolean
   setLoading: (v: boolean) => void
   setSession: (token: string | null, user?: User | null) => void
+  setUser: (user: User | null) => void
   logout: () => Promise<void>
 
   // Selectores/computeds prácticos
@@ -44,6 +44,8 @@ export const useAuth = create<AuthState>((set, get) => ({
   setLoading: (v) => set({ loading: v }),
 
   setSession: (token, user = null) => set({ accessToken: token, user }),
+
+  setUser: (user) => set({ user }),
 
   logout: async () => {
     const auth = getAuth()

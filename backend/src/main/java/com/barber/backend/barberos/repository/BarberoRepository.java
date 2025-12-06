@@ -15,4 +15,6 @@ public interface BarberoRepository extends JpaRepository<Barbero, Long> {
   @Override
   @EntityGraph(attributePaths = "servicios")            // 👈 también en findAll(pageable)
   Page<Barbero> findAll(Pageable pageable);
+
+  long countByActivoTrue();
 }

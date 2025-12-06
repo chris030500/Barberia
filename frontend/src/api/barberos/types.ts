@@ -4,6 +4,12 @@ export type BarberoDTO = {
   telefonoE164?: string | null;
   descripcion?: string | null;
   avatarUrl?: string | null;
+  emailProfesional?: string | null;
+  instagramHandle?: string | null;
+  portafolioUrl?: string | null;
+  slogan?: string | null;
+  experienciaAnos?: number | null;
+  especialidades: string[];
   activo: boolean;
   creadoEn: string;
   actualizadoEn?: string | null;
@@ -15,6 +21,12 @@ export type BarberoSave = {
   telefonoE164?: string | null;
   descripcion?: string | null;
   avatarUrl?: string | null;
+  emailProfesional?: string | null;
+  instagramHandle?: string | null;
+  portafolioUrl?: string | null;
+  slogan?: string | null;
+  experienciaAnos?: number | null;
+  especialidades?: string[];
   activo?: boolean;
   servicios?: number[];
 };
@@ -25,4 +37,55 @@ export type Page<T> = {
   totalPages: number;
   number: number; // page index
   size: number;
+};
+
+export type BarberoServicioResumen = {
+  id: number;
+  nombre: string;
+  duracionMin: number | null;
+  precioCentavos: number | null;
+};
+
+export type BarberoDisponibilidadBarbero = {
+  id: number;
+  nombre: string;
+  telefonoE164?: string | null;
+  descripcion?: string | null;
+  avatarUrl?: string | null;
+  emailProfesional?: string | null;
+  instagramHandle?: string | null;
+  portafolioUrl?: string | null;
+  slogan?: string | null;
+  experienciaAnos?: number | null;
+  especialidades: string[];
+  activo: boolean;
+  servicios: BarberoServicioResumen[];
+};
+
+export type BarberoDisponibilidadMetrics = {
+  diasActivos: number;
+  horasSemana: number;
+  bloquesProximos: number;
+  citasProximas: number;
+  proximaCita?: string | null;
+  proximoBloqueo?: string | null;
+  serviciosActivos: number;
+};
+
+export type BarberoDisponibilidadCita = {
+  id: number;
+  inicio: string;
+  fin: string;
+  clienteNombre: string;
+  servicioNombre: string | null;
+  estado: string | null;
+  precioCentavos: number | null;
+};
+
+export type BarberoDisponibilidadResumen = {
+  barbero: BarberoDisponibilidadBarbero;
+  horario: import("@/api/horario/horario-semanal").HorarioDia[];
+  metrics: BarberoDisponibilidadMetrics;
+  proximosBloqueos: import("@/api/horario/bloqueos").Bloqueo[];
+  proximasCitas: BarberoDisponibilidadCita[];
 };

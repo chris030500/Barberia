@@ -9,6 +9,7 @@ import com.barber.backend.citas.model.Cita.Estado;
 import com.barber.backend.citas.repository.CitaRepository;
 import com.barber.backend.catalogo.model.Servicio;
 import com.barber.backend.catalogo.repository.ServicioRepository;
+import com.barber.backend.login.security.AppUserPrincipal;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
@@ -22,11 +23,17 @@ public class CitaService {
     private final CitaRepository repo;
     private final BarberoRepository barberoRepo;
     private final ServicioRepository servicioRepo;
+    private final ClientePerfilResolver clientePerfilResolver;
 
-    public CitaService(CitaRepository repo, BarberoRepository barberoRepo, ServicioRepository servicioRepo) {
+    public CitaService(
+            CitaRepository repo,
+            BarberoRepository barberoRepo,
+            ServicioRepository servicioRepo,
+            ClientePerfilResolver clientePerfilResolver) {
         this.repo = repo;
         this.barberoRepo = barberoRepo;
         this.servicioRepo = servicioRepo;
+        this.clientePerfilResolver = clientePerfilResolver;
     }
 
     public Page<CitaDTO> list(Long barberoId, Estado estado, Instant desde, Instant hasta, Pageable pageable) {
@@ -46,7 +53,7 @@ public class CitaService {
     }
 
     @Transactional
-    public CitaDTO create(CitaSaveRequest in) {
+    public CitaDTO create(CitaSaveRequest in, AppUserPrincipal principal) {
         Barbero barbero = barberoRepo.findById(in.barberoId())
                 .orElseThrow(() -> new EntityNotFoundException("Barbero no encontrado"));
         Servicio servicio = servicioRepo.findById(in.servicioId())
@@ -55,8 +62,10 @@ public class CitaService {
         Cita c = new Cita();
         c.setBarbero(barbero);
         c.setServicio(servicio);
-        c.setClienteNombre(in.clienteNombre());
-        c.setClienteTelE164(in.clienteTelE164());
+        ClientePerfilResolver.ClienteData data =
+                clientePerfilResolver.resolve(in, principal, null, null);
+        c.setClienteNombre(data.nombre());
+        c.setClienteTelE164(data.telefono());
         c.setInicio(in.inicio());
         c.setEstado(Cita.Estado.AGENDADA);
         c.setOverrideDuracionMin(in.overrideDuracionMin());
@@ -80,7 +89,7 @@ public class CitaService {
     }
 
     @Transactional
-    public CitaDTO update(Long id, CitaSaveRequest in) {
+    public CitaDTO update(Long id, CitaSaveRequest in, AppUserPrincipal principal) {
         Cita c = repo.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Cita no encontrada"));
 
@@ -91,8 +100,10 @@ public class CitaService {
 
         c.setBarbero(barbero);
         c.setServicio(servicio);
-        c.setClienteNombre(in.clienteNombre());
-        c.setClienteTelE164(in.clienteTelE164());
+        ClientePerfilResolver.ClienteData data = clientePerfilResolver.resolve(
+                in, principal, c.getClienteNombre(), c.getClienteTelE164());
+        c.setClienteNombre(data.nombre());
+        c.setClienteTelE164(data.telefono());
         c.setInicio(in.inicio());
         c.setOverrideDuracionMin(in.overrideDuracionMin());
         c.setOverridePrecioCentavos(in.overridePrecioCentavos());
@@ -150,4 +161,5 @@ public class CitaService {
                 c.getActualizadoEn()
         );
     }
+
 }
